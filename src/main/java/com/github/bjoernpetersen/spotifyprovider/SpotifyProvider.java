@@ -51,15 +51,15 @@ public class SpotifyProvider implements Provider {
   public List<? extends Entry> initializeConfigEntries(Config config) {
     accessToken = config.secret(getClass(), "accessToken", "OAuth access token");
     tokenExpiration = config.secret(
-      getClass(),
-      "tokenExpiration",
-      "Token expiration date"
+        getClass(),
+        "tokenExpiration",
+        "Token expiration date"
     );
     market = config.stringEntry(
-      getClass(),
-      "market",
-      "Two-letter country code of your Spotify account",
-      "DE"
+        getClass(),
+        "market",
+        "Two-letter country code of your Spotify account",
+        "DE"
     );
     return Collections.singletonList(market);
   }
@@ -84,8 +84,8 @@ public class SpotifyProvider implements Provider {
     }
 
     api = Api.builder()
-      .accessToken(token.getToken())
-      .build();
+        .accessToken(token.getToken())
+        .build();
     token.addListener(t -> api.setAccessToken(t.getToken()));
 
     SpotifyPlaybackFactory factory = manager.getFactory(SpotifyPlaybackFactory.class);
@@ -120,9 +120,9 @@ public class SpotifyProvider implements Provider {
     URL redirectUrl = receiver.getRedirectUrl();
 
     BrowserClientRequestUrl url = new BrowserClientRequestUrl(SPOTIFY_URL, CLIENT_ID)
-      .setState(state)
-      .setScopes(Arrays.asList("user-modify-playback-state", "user-read-playback-state"))
-      .setRedirectUri(redirectUrl.toExternalForm());
+        .setState(state)
+        .setScopes(Arrays.asList("user-modify-playback-state", "user-read-playback-state"))
+        .setRedirectUri(redirectUrl.toExternalForm());
 
     try {
       Desktop.getDesktop().browse(new URL(url.build()).toURI());
@@ -159,11 +159,11 @@ public class SpotifyProvider implements Provider {
   public List<Song> search(@Nonnull String query) {
     try {
       return api.searchTracks(query)
-        .limit(40)
-        .market(market.getOrDefault())
-        .build().get().getItems().stream()
-        .map(this::songFromTrack)
-        .collect(Collectors.toList());
+          .limit(40)
+          .market(market.getOrDefault())
+          .build().get().getItems().stream()
+          .map(this::songFromTrack)
+          .collect(Collectors.toList());
     } catch (IOException | WebApiException e) {
       log.severe("Error searching for spotify songs: " + e);
       e.printStackTrace(); // TODO delete
@@ -175,9 +175,9 @@ public class SpotifyProvider implements Provider {
     String id = track.getId();
     String title = track.getName();
     String description = track.getArtists().stream()
-      .map(SimpleArtist::getName)
-      .reduce((l, r) -> l + ", " + r)
-      .orElseThrow(() -> new IllegalStateException("Found song without artists"));
+        .map(SimpleArtist::getName)
+        .reduce((l, r) -> l + ", " + r)
+        .orElseThrow(() -> new IllegalStateException("Found song without artists"));
     return createSong(id, title, description);
   }
 

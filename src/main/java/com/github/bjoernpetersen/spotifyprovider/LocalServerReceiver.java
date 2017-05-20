@@ -98,7 +98,7 @@ class LocalServerReceiver {
 
     @Override
     public void handle(String target, HttpServletRequest request, HttpServletResponse response,
-      int dispatch) throws IOException {
+        int dispatch) throws IOException {
       log.finer("Handle...");
       if (!CALLBACK_PATH.equals(target)) {
         log.warning("Wrong path: " + target);
@@ -162,8 +162,8 @@ class LocalServerReceiver {
       doc.println("<script>");
       doc.println("if(window.location.hash) {");
       doc.println("window.open('"
-        + redirectUrl.toExternalForm()
-        + "?' + window.location.hash.substring(1), '_self', false);");
+          + redirectUrl.toExternalForm()
+          + "?' + window.location.hash.substring(1), '_self', false);");
       doc.println("}");
       doc.println("</script>");
       doc.println("</body>");

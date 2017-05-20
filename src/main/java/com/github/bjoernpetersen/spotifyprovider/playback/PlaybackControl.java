@@ -65,7 +65,7 @@ class PlaybackControl {
 
   private int playImpl(@Nullable String songId) throws PlaybackException {
     HttpRequestWithBody request = Unirest.put(BASE_URL + "/play")
-      .header(AUTHORIZATION_HEADER, getAuthString());
+        .header(AUTHORIZATION_HEADER, getAuthString());
     if (songId != null) {
       request.body(new JSONObject().put("uris", new JSONArray().put(toUriString(songId))));
     }
@@ -96,7 +96,7 @@ class PlaybackControl {
   private int pauseImpl() throws PlaybackException {
     try {
       return Unirest.put(BASE_URL + "/pause").header(AUTHORIZATION_HEADER, getAuthString())
-        .asJson().getStatus();
+          .asJson().getStatus();
     } catch (UnirestException e) {
       throw new PlaybackException(e);
     }
@@ -112,8 +112,8 @@ class PlaybackControl {
     HttpResponse<JsonNode> response;
     try {
       response = Unirest.get(BASE_URL + "/currently-playing")
-        .header(AUTHORIZATION_HEADER, getAuthString())
-        .asJson();
+          .header(AUTHORIZATION_HEADER, getAuthString())
+          .asJson();
     } catch (UnirestException e) {
       throw new PlaybackException(e);
     }
