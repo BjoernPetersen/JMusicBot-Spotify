@@ -28,7 +28,7 @@ class SpotifyPlayback extends AbstractPlayback {
     this.control = new PlaybackControl(token);
     this.doneChecker = Executors
         .newSingleThreadScheduledExecutor(new NamedThreadFactory("Spotify-done-checker"));
-    doneChecker.scheduleWithFixedDelay(this::checkDone, 500, 5000, TimeUnit.MILLISECONDS);
+    doneChecker.scheduleWithFixedDelay(this::checkDone, 2000, 5000, TimeUnit.MILLISECONDS);
   }
 
   @Override
