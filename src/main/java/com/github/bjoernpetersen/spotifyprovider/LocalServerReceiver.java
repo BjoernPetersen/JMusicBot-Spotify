@@ -145,6 +145,9 @@ class LocalServerReceiver {
       doc.println("<head><title>OAuth 2.0 Authentication Token Received</title></head>");
       doc.println("<body>");
       doc.println("Received verification code. You may now close this window...");
+      doc.println("<script>");
+      doc.println("window.close();");
+      doc.println("</script>");
       doc.println("</body>");
       doc.println("</HTML>");
       doc.flush();
