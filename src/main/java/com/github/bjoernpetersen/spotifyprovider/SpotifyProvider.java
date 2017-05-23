@@ -2,7 +2,6 @@ package com.github.bjoernpetersen.spotifyprovider;
 
 import com.github.bjoernpetersen.jmusicbot.InitializationException;
 import com.github.bjoernpetersen.jmusicbot.PlaybackFactoryManager;
-import com.github.bjoernpetersen.jmusicbot.PlaybackSupplier;
 import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
@@ -44,7 +43,7 @@ public class SpotifyProvider implements Provider {
 
   private Token token;
   private Api api;
-  private PlaybackSupplier playbackSupplier;
+  private Song.Builder songBuilder;
 
   @Nonnull
   @Override
@@ -89,14 +88,21 @@ public class SpotifyProvider implements Provider {
     token.addListener(t -> api.setAccessToken(t.getToken()));
 
     SpotifyPlaybackFactory factory = manager.getFactory(SpotifyPlaybackFactory.class);
-    playbackSupplier = song -> factory.getPlayback(token, song.getId());
+    songBuilder = initializeSongBuilder(factory);
+  }
+
+  private Song.Builder initializeSongBuilder(SpotifyPlaybackFactory factory) {
+    return new Song.Builder()
+        .playbackSupplier(song -> factory.getPlayback(token, song.getId()))
+        .songLoader(SongLoader.DUMMY)
+        .provider(this);
   }
 
   @Override
   public void close() throws IOException {
     api = null;
     token = null;
-    playbackSupplier = null;
+    songBuilder = null;
   }
 
   private Token initAuth() throws IOException {
@@ -151,7 +157,7 @@ public class SpotifyProvider implements Provider {
   }
 
   private Song createSong(String id, String title, String description) {
-    return new Song(playbackSupplier, SongLoader.DUMMY, getName(), id, title, description);
+    return songBuilder.id(id).title(title).description(description).build();
   }
 
   @Nonnull

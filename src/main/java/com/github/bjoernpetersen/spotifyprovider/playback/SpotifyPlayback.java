@@ -54,7 +54,6 @@ class SpotifyPlayback extends AbstractPlayback {
     }
   }
 
-
   private void checkDone() {
     boolean notPlaying;
     try {
