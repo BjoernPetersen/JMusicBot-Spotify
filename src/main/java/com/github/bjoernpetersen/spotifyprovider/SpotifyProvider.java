@@ -1,5 +1,6 @@
 package com.github.bjoernpetersen.spotifyprovider;
 
+import com.github.bjoernpetersen.jmusicbot.InitStateWriter;
 import com.github.bjoernpetersen.jmusicbot.InitializationException;
 import com.github.bjoernpetersen.jmusicbot.PlaybackFactoryManager;
 import com.github.bjoernpetersen.jmusicbot.Song;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -47,7 +49,7 @@ public class SpotifyProvider implements Provider {
 
   @Nonnull
   @Override
-  public List<? extends Entry> initializeConfigEntries(Config config) {
+  public List<? extends Entry> initializeConfigEntries(@Nonnull Config config) {
     accessToken = config.secret(getClass(), "accessToken", "OAuth access token");
     tokenExpiration = config.secret(
         getClass(),
@@ -58,7 +60,13 @@ public class SpotifyProvider implements Provider {
         getClass(),
         "market",
         "Two-letter country code of your Spotify account",
-        "DE"
+        "DE",
+        countryCode -> {
+          if (countryCode.length() != 2) {
+            return Optional.of("Country code must have two letters");
+          }
+          return Optional.empty();
+        }
     );
     return Collections.singletonList(market);
   }
@@ -75,9 +83,12 @@ public class SpotifyProvider implements Provider {
   }
 
   @Override
-  public void initialize(@Nonnull PlaybackFactoryManager manager) throws InitializationException {
+  public void initialize(@Nonnull InitStateWriter initStateWriter,
+      @Nonnull PlaybackFactoryManager manager) throws InitializationException {
     try {
+      initStateWriter.state("Retrieving OAuth token");
       this.token = initAuth();
+      initStateWriter.state("OAuth token received");
     } catch (IOException e) {
       throw new InitializationException("Error authorizing", e);
     }
@@ -111,7 +122,10 @@ public class SpotifyProvider implements Provider {
       String expirationString = tokenExpiration.get().get();
       long expiration = Long.parseUnsignedLong(expirationString);
       Date expirationDate = new Date(expiration);
-      return new Token(token, expirationDate, this::authorize);
+      Token result = new Token(token, expirationDate, this::authorize);
+      // if it's expired, this call will refresh the token
+      result.getToken();
+      return result;
     } else {
       TokenValues values = authorize();
       return new Token(values, this::authorize);
@@ -177,7 +191,8 @@ public class SpotifyProvider implements Provider {
     }
   }
 
-  private Song songFromTrack(Track track) {
+  @Nonnull
+  private Song songFromTrack(@Nonnull Track track) {
     String id = track.getId();
     String title = track.getName();
     String description = track.getArtists().stream()

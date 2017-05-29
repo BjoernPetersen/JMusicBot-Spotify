@@ -1,5 +1,6 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
+import com.github.bjoernpetersen.jmusicbot.InitStateWriter;
 import com.github.bjoernpetersen.jmusicbot.InitializationException;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
@@ -26,8 +27,7 @@ public class SpotifyPlaybackFactory implements PlaybackFactory {
   }
 
   @Override
-  public void initialize() throws InitializationException {
-
+  public void initialize(@Nonnull InitStateWriter initStateWriter) throws InitializationException {
   }
 
   @Override
