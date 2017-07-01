@@ -26,9 +26,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
@@ -175,6 +175,9 @@ public class SpotifyProvider implements Loggable, Provider {
   @Nonnull
   @Override
   public List<Song> search(@Nonnull String query) {
+    if (Objects.requireNonNull(query).isEmpty()) {
+      return Collections.emptyList();
+    }
     try {
       return api.searchTracks(query)
           .limit(40)
@@ -183,7 +186,7 @@ public class SpotifyProvider implements Loggable, Provider {
           .map(this::songFromTrack)
           .collect(Collectors.toList());
     } catch (IOException | WebApiException e) {
-      logSevere("Error searching for spotify songs: ", e);
+      logSevere("Error searching for spotify songs", e);
       return Collections.emptyList();
     }
   }
