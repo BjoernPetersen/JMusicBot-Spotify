@@ -186,7 +186,7 @@ public class SpotifyProvider implements Loggable, Provider {
           .map(this::songFromTrack)
           .collect(Collectors.toList());
     } catch (IOException | WebApiException e) {
-      logSevere("Error searching for spotify songs", e);
+      logSevere(e, "Error searching for spotify songs (query: %s)", query);
       return Collections.emptyList();
     }
   }
