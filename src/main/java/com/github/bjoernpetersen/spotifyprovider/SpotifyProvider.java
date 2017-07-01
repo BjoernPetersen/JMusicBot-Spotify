@@ -2,6 +2,7 @@ package com.github.bjoernpetersen.spotifyprovider;
 
 import com.github.bjoernpetersen.jmusicbot.InitStateWriter;
 import com.github.bjoernpetersen.jmusicbot.InitializationException;
+import com.github.bjoernpetersen.jmusicbot.Loggable;
 import com.github.bjoernpetersen.jmusicbot.PlaybackFactoryManager;
 import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
@@ -31,10 +32,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
-public class SpotifyProvider implements Provider {
-
-  @Nonnull
-  private static final Logger log = Logger.getLogger(SpotifyProvider.class.getName());
+public class SpotifyProvider implements Loggable, Provider {
 
   private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
   private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
@@ -185,8 +183,7 @@ public class SpotifyProvider implements Provider {
           .map(this::songFromTrack)
           .collect(Collectors.toList());
     } catch (IOException | WebApiException e) {
-      log.severe("Error searching for spotify songs: " + e);
-      e.printStackTrace(); // TODO delete
+      logSevere("Error searching for spotify songs: ", e);
       return Collections.emptyList();
     }
   }

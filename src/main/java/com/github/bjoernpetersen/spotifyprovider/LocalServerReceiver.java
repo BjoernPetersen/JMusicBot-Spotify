@@ -1,5 +1,6 @@
 package com.github.bjoernpetersen.spotifyprovider;
 
+import com.github.bjoernpetersen.jmusicbot.Loggable;
 import com.github.bjoernpetersen.spotifyprovider.TokenRefresher.TokenValues;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,10 +19,7 @@ import org.mortbay.jetty.Request;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
 
-class LocalServerReceiver {
-
-  @Nonnull
-  private static final Logger log = Logger.getLogger(LocalServerReceiver.class.getName());
+class LocalServerReceiver implements Loggable {
 
   private static final String STATE_KEY = "state";
   private static final String ACCESS_TOKEN_KEY = "access_token";
@@ -67,9 +65,9 @@ class LocalServerReceiver {
     try {
       server.setGracefulShutdown(500);
       server.stop();
-      log.finer("Jetty server stopped.");
+      logFiner("Jetty server stopped.");
     } catch (Exception e) {
-      log.severe("Could not close server: " + e);
+      logSevere("Could not close server", e);
     }
   }
 
@@ -99,18 +97,18 @@ class LocalServerReceiver {
     @Override
     public void handle(String target, HttpServletRequest request, HttpServletResponse response,
         int dispatch) throws IOException {
-      log.finer("Handle...");
+      logFiner("Handle...");
       if (!CALLBACK_PATH.equals(target)) {
-        log.warning("Wrong path: " + target);
+        logWarning("Wrong path: " + target);
         return;
       }
 
       if (request.getParameterMap().containsKey(ACCESS_TOKEN_KEY)) {
         if (!state.equals(request.getParameter(STATE_KEY))) {
-          log.warning("Wrong state: " + request.getParameter(STATE_KEY));
+          logWarning("Wrong state: " + request.getParameter(STATE_KEY));
           return;
         }
-        log.finer("Writing landing page...");
+        logFiner("Writing landing page...");
         writeLandingHtml(response);
         response.flushBuffer();
         lock.lock();
@@ -128,7 +126,7 @@ class LocalServerReceiver {
           lock.unlock();
         }
       } else {
-        log.fine("Redirecting...");
+        logFine("Redirecting...");
         writeRedirectHtml(response);
         response.flushBuffer();
       }

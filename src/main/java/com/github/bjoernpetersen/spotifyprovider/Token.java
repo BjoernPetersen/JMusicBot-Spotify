@@ -1,18 +1,15 @@
 package com.github.bjoernpetersen.spotifyprovider;
 
+import com.github.bjoernpetersen.jmusicbot.Loggable;
 import com.github.bjoernpetersen.spotifyprovider.TokenRefresher.TokenValues;
 import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
-public final class Token {
-
-  @Nonnull
-  private static final Logger log = Logger.getLogger(Token.class.getName());
+public final class Token implements Loggable {
 
   @Nonnull
   private String token;
@@ -56,10 +53,10 @@ public final class Token {
       TokenValues values = tokenRefresher.refresh();
       this.token = values.getToken();
       this.expiration = values.getExpirationDate();
-      log.finer("Refreshed access token");
+      logFiner("Refreshed access token");
       changeListener.forEach(c -> c.accept(this));
     } catch (IOException e) {
-      log.severe("Could not refresh token: " + e);
+      logSevere("Could not refresh token", e);
     }
   }
 
