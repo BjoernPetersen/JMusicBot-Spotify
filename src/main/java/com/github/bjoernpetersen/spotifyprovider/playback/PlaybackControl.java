@@ -1,5 +1,6 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
+import com.github.bjoernpetersen.jmusicbot.playback.PlaybackStateListener.PlaybackState;
 import com.github.bjoernpetersen.spotifyprovider.Token;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
@@ -103,12 +104,13 @@ class PlaybackControl {
   }
 
   /**
-   * Determines whether this song has probably ended yet.
+   * Determines whether this song is playing, paused, or stopped/skipped.
    *
-   * @return whether this song is not playing
+   * @return PLAY, PAUSE, or null if the song is not playing anymore
    * @throws PlaybackException if any error occurs
    */
-  public boolean isNotPlaying(String songId) throws PlaybackException {
+  @Nullable
+  public PlaybackState checkState(String songId) throws PlaybackException {
     HttpResponse<JsonNode> response;
     try {
       response = Unirest.get(BASE_URL + "/currently-playing")
@@ -132,12 +134,16 @@ class PlaybackControl {
     }
 
     if (!body.getBoolean(IS_PLAYING) && body.getLong(PROGRESS) == 0) {
-      return true;
+      return null;
     }
 
     JSONObject item = body.getJSONObject(ITEM);
     String id = item.getString("id");
-    return !songId.equals(id);
+    if (!songId.equals(id)) {
+      return null;
+    }
+
+    return body.getBoolean(IS_PLAYING) ? PlaybackState.PLAY : PlaybackState.PAUSE;
   }
 
   private String toUriString(String songId) {

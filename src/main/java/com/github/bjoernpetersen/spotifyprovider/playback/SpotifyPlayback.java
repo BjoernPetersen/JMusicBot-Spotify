@@ -1,34 +1,32 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
+import com.github.bjoernpetersen.jmusicbot.Loggable;
 import com.github.bjoernpetersen.jmusicbot.NamedThreadFactory;
 import com.github.bjoernpetersen.jmusicbot.playback.AbstractPlayback;
+import com.github.bjoernpetersen.jmusicbot.playback.PlaybackStateListener.PlaybackState;
 import com.github.bjoernpetersen.spotifyprovider.Token;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
-class SpotifyPlayback extends AbstractPlayback {
-
-  @Nonnull
-  private static final Logger log = Logger.getLogger(SpotifyPlayback.class.getName());
+class SpotifyPlayback extends AbstractPlayback implements Loggable {
 
   @Nonnull
   private final String songId;
   @Nonnull
   private final PlaybackControl control;
   @Nonnull
-  private final ScheduledExecutorService doneChecker;
+  private final ScheduledExecutorService stateChecker;
 
   private boolean isStarted = false;
 
   SpotifyPlayback(@Nonnull Token token, @Nonnull String songId) {
     this.songId = songId;
     this.control = new PlaybackControl(token);
-    this.doneChecker = Executors
-        .newSingleThreadScheduledExecutor(new NamedThreadFactory("Spotify-done-checker"));
-    doneChecker.scheduleWithFixedDelay(this::checkDone, 2000, 5000, TimeUnit.MILLISECONDS);
+    this.stateChecker = Executors
+        .newSingleThreadScheduledExecutor(new NamedThreadFactory("Spotify-state-checker"));
+    stateChecker.scheduleWithFixedDelay(this::checkState, 2000, 5000, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -41,7 +39,7 @@ class SpotifyPlayback extends AbstractPlayback {
         isStarted = true;
       }
     } catch (PlaybackException e) {
-      log.severe("Could not play: " + e);
+      logSevere(e, "Could not play");
     }
   }
 
@@ -50,31 +48,33 @@ class SpotifyPlayback extends AbstractPlayback {
     try {
       control.pause();
     } catch (PlaybackException e) {
-      log.severe("Could not pause: " + e);
+      logSevere(e, "Could not pause");
     }
   }
 
-  private void checkDone() {
-    boolean notPlaying;
+  private void checkState() {
+    PlaybackState state;
     try {
-      notPlaying = control.isNotPlaying(songId);
+      state = control.checkState(songId);
     } catch (PlaybackException e) {
-      log.warning("Error while done checking: " + e);
+      logWarning(e, "Error while state checking");
       return;
     }
 
-    log.finest("Checked for song done: " + notPlaying);
+    logFinest("Checked for song state: " + state);
 
-    if (notPlaying) {
+    if (state == null) {
       markDone();
-      doneChecker.shutdown();
+      stateChecker.shutdown();
+    } else {
+      getPlaybackStateListener().ifPresent(listener -> listener.notify(state));
     }
   }
 
   @Override
   public void close() throws Exception {
     pause();
-    doneChecker.shutdownNow();
+    stateChecker.shutdownNow();
     super.close();
   }
 }
