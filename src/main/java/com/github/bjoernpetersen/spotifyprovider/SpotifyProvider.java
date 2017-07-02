@@ -8,6 +8,7 @@ import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
+import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
 import com.github.bjoernpetersen.spotifyprovider.TokenRefresher.TokenValues;
@@ -28,7 +29,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -63,9 +64,9 @@ public class SpotifyProvider implements Loggable, Provider {
         "DE",
         countryCode -> {
           if (countryCode.length() != 2) {
-            return Optional.of("Country code must have two letters");
+            return "Country code must have two letters";
           }
-          return Optional.empty();
+          return null;
         }
     );
     return Collections.singletonList(market);
@@ -80,6 +81,11 @@ public class SpotifyProvider implements Loggable, Provider {
     accessToken = null;
     tokenExpiration = null;
     market = null;
+  }
+
+  @Override
+  public Set<Class<? extends PlaybackFactory>> getPlaybackDependencies() {
+    return Collections.singleton(SpotifyPlaybackFactory.class);
   }
 
   @Override
