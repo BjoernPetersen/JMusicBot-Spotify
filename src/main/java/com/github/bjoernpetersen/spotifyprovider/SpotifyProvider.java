@@ -15,6 +15,7 @@ import com.github.bjoernpetersen.spotifyprovider.playback.SpotifyPlaybackFactory
 import com.google.api.client.auth.oauth2.BrowserClientRequestUrl;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.exceptions.WebApiException;
+import com.wrapper.spotify.models.Image;
 import com.wrapper.spotify.models.SimpleArtist;
 import com.wrapper.spotify.models.Track;
 import java.awt.Desktop;
@@ -31,6 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class SpotifyProvider implements Loggable, Provider {
 
@@ -168,8 +170,15 @@ public class SpotifyProvider implements Loggable, Provider {
     return Integer.toString(ran.nextInt(Integer.MAX_VALUE));
   }
 
-  private Song createSong(String id, String title, String description) {
-    return songBuilder.id(id).title(title).description(description).build();
+  @Nonnull
+  private Song createSong(String id, String title, String description,
+      @Nullable String albumArtUrl) {
+    return songBuilder
+        .id(id)
+        .title(title)
+        .description(description)
+        .albumArtUrl(albumArtUrl)
+        .build();
   }
 
   @Nonnull
@@ -199,7 +208,9 @@ public class SpotifyProvider implements Loggable, Provider {
         .map(SimpleArtist::getName)
         .reduce((l, r) -> l + ", " + r)
         .orElseThrow(() -> new IllegalStateException("Found song without artists"));
-    return createSong(id, title, description);
+    List<Image> images = track.getAlbum().getImages();
+    String albumArtUrl = images.isEmpty() ? null : images.get(0).getUrl();
+    return createSong(id, title, description, albumArtUrl);
   }
 
   @Nonnull
