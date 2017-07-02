@@ -56,7 +56,7 @@ public final class Token implements Loggable {
       logFiner("Refreshed access token");
       changeListener.forEach(c -> c.accept(this));
     } catch (IOException e) {
-      logSevere("Could not refresh token", e);
+      logSevere(e, "Could not refresh token");
     }
   }
 

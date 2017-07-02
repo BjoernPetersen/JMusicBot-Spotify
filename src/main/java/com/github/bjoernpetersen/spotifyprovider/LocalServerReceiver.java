@@ -67,7 +67,7 @@ class LocalServerReceiver implements Loggable {
       server.stop();
       logFiner("Jetty server stopped.");
     } catch (Exception e) {
-      logSevere("Could not close server", e);
+      logSevere(e, "Could not close server");
     }
   }
 
