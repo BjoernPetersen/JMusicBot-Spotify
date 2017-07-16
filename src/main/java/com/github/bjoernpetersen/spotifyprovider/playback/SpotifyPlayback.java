@@ -1,10 +1,10 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import com.github.bjoernpetersen.jmusicbot.Loggable;
-import com.github.bjoernpetersen.jmusicbot.NamedThreadFactory;
 import com.github.bjoernpetersen.jmusicbot.playback.AbstractPlayback;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackStateListener.PlaybackState;
 import com.github.bjoernpetersen.spotifyprovider.Token;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,8 +24,11 @@ class SpotifyPlayback extends AbstractPlayback implements Loggable {
   SpotifyPlayback(@Nonnull Token token, @Nonnull String songId) {
     this.songId = songId;
     this.control = new PlaybackControl(token);
-    this.stateChecker = Executors
-        .newSingleThreadScheduledExecutor(new NamedThreadFactory("Spotify-state-checker"));
+    this.stateChecker = Executors.newSingleThreadScheduledExecutor(
+        new ThreadFactoryBuilder()
+            .setNameFormat("Spotify-state-checker-%d")
+            .build()
+    );
     stateChecker.scheduleWithFixedDelay(this::checkState, 2000, 5000, TimeUnit.MILLISECONDS);
   }
 
