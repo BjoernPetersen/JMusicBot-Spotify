@@ -177,12 +177,13 @@ public class SpotifyProvider implements Loggable, Provider {
   }
 
   @Nonnull
-  private Song createSong(String id, String title, String description,
+  private Song createSong(String id, String title, String description, int durationMs,
       @Nullable String albumArtUrl) {
     return songBuilder
         .id(id)
         .title(title)
         .description(description)
+        .duration(durationMs / 1000)
         .albumArtUrl(albumArtUrl)
         .build();
   }
@@ -214,9 +215,10 @@ public class SpotifyProvider implements Loggable, Provider {
         .map(SimpleArtist::getName)
         .reduce((l, r) -> l + ", " + r)
         .orElseThrow(() -> new IllegalStateException("Found song without artists"));
+    int durationMs = track.getDuration();
     List<Image> images = track.getAlbum().getImages();
     String albumArtUrl = images.isEmpty() ? null : images.get(0).getUrl();
-    return createSong(id, title, description, albumArtUrl);
+    return createSong(id, title, description, durationMs, albumArtUrl);
   }
 
   @Nonnull
