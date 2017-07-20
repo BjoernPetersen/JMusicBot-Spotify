@@ -8,6 +8,8 @@ import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
+import com.github.bjoernpetersen.jmusicbot.platform.Platform;
+import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
@@ -47,6 +49,21 @@ public class SpotifyProvider implements Loggable, Provider {
   private Token token;
   private Api api;
   private Song.Builder songBuilder;
+
+  @Nonnull
+  @Override
+  public Support getSupport(@Nonnull Platform platform) {
+    switch (platform) {
+      case ANDROID:
+        return Support.NO;
+      case LINUX:
+      case WINDOWS:
+        return Support.YES;
+      case UNKNOWN:
+      default:
+        return Support.MAYBE;
+    }
+  }
 
   @Nonnull
   @Override

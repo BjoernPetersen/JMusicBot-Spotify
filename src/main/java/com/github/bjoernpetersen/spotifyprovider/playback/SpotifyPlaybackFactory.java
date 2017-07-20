@@ -4,6 +4,8 @@ import com.github.bjoernpetersen.jmusicbot.InitStateWriter;
 import com.github.bjoernpetersen.jmusicbot.InitializationException;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
+import com.github.bjoernpetersen.jmusicbot.platform.Platform;
+import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.Playback;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.spotifyprovider.Token;
@@ -18,7 +20,13 @@ public class SpotifyPlaybackFactory implements PlaybackFactory {
 
   @Nonnull
   @Override
-  public List<? extends Entry> initializeConfigEntries(Config config) {
+  public Support getSupport(@Nonnull Platform platform) {
+    return platform == Platform.UNKNOWN ? Support.MAYBE : Support.YES;
+  }
+
+  @Nonnull
+  @Override
+  public List<? extends Entry> initializeConfigEntries(@Nonnull Config config) {
     return Collections.emptyList();
   }
 
