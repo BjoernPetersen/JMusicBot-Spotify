@@ -20,6 +20,12 @@ public class SpotifyPlaybackFactory implements PlaybackFactory {
 
   @Nonnull
   @Override
+  public String getReadableName() {
+    return "Spotify PlaybackFactory";
+  }
+
+  @Nonnull
+  @Override
   public Support getSupport(@Nonnull Platform platform) {
     return platform == Platform.UNKNOWN ? Support.MAYBE : Support.YES;
   }
