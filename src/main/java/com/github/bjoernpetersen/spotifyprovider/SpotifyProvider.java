@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class SpotifyProvider implements Loggable, Provider {
+public class SpotifyProvider implements Loggable, SpotifyProviderBase {
 
   private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
   private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
@@ -52,9 +52,22 @@ public class SpotifyProvider implements Loggable, Provider {
 
   @Nonnull
   @Override
+  public Class<? extends Provider> getBaseClass() {
+    return SpotifyProviderBase.class;
+  }
+
+  @Nonnull
+  @Override
+  public Api getApi() {
+    return api;
+  }
+
+  @Nonnull
+  @Override
   public Support getSupport(@Nonnull Platform platform) {
     switch (platform) {
       case ANDROID:
+        // Token retrieval is not supported yet
         return Support.NO;
       case LINUX:
       case WINDOWS:
