@@ -8,6 +8,7 @@ import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
+import com.github.bjoernpetersen.jmusicbot.config.ui.DefaultStringConverter;
 import com.github.bjoernpetersen.jmusicbot.config.ui.TextBox;
 import com.github.bjoernpetersen.jmusicbot.platform.Platform;
 import com.github.bjoernpetersen.jmusicbot.platform.Support;
@@ -95,7 +96,7 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
         "Two-letter country code of your Spotify account",
         false,
         "DE",
-        new TextBox(),
+        new TextBox<>(DefaultStringConverter.INSTANCE),
         countryCode -> {
           if (countryCode.length() != 2) {
             return "Country code must have two letters";
