@@ -37,7 +37,7 @@ public class SpotifyPlaybackFactory implements PlaybackFactory {
   }
 
   @Override
-  public void destructConfigEntries() {
+  public void dereferenceConfigEntries() {
   }
 
   @Override

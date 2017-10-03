@@ -8,6 +8,7 @@ import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
+import com.github.bjoernpetersen.jmusicbot.config.ui.TextBox;
 import com.github.bjoernpetersen.jmusicbot.platform.Platform;
 import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
@@ -81,17 +82,20 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
   @Nonnull
   @Override
   public List<? extends Entry> initializeConfigEntries(@Nonnull Config config) {
-    accessToken = config.secret(getClass(), "accessToken", "OAuth access token");
-    tokenExpiration = config.secret(
+    accessToken = config.new StringEntry(getClass(), "accessToken", "OAuth access token", true);
+    tokenExpiration = config.new StringEntry(
         getClass(),
         "tokenExpiration",
-        "Token expiration date"
+        "Token expiration date",
+        true
     );
-    market = config.stringEntry(
+    market = config.new StringEntry(
         getClass(),
         "market",
         "Two-letter country code of your Spotify account",
+        false,
         "DE",
+        new TextBox(),
         countryCode -> {
           if (countryCode.length() != 2) {
             return "Country code must have two letters";
@@ -103,10 +107,10 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
   }
 
   @Override
-  public void destructConfigEntries() {
-    accessToken.tryDestruct();
-    tokenExpiration.tryDestruct();
-    market.tryDestruct();
+  public void dereferenceConfigEntries() {
+    accessToken.destruct();
+    tokenExpiration.destruct();
+    market.destruct();
 
     accessToken = null;
     tokenExpiration = null;
@@ -153,9 +157,9 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
   }
 
   private Token initAuth() throws IOException {
-    if (accessToken.get().isPresent() && tokenExpiration.get().isPresent()) {
-      String token = accessToken.get().get();
-      String expirationString = tokenExpiration.get().get();
+    if (accessToken.getValue() != null && tokenExpiration.getValue() != null) {
+      String token = accessToken.getValue();
+      String expirationString = tokenExpiration.getValue();
       long expiration = Long.parseUnsignedLong(expirationString);
       Date expirationDate = new Date(expiration);
       Token result = new Token(token, expirationDate, this::authorize);
@@ -227,7 +231,7 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
     try {
       return api.searchTracks(query)
           .limit(40)
-          .market(market.getOrDefault())
+          .market(market.getValue())
           .build().get().getItems().stream()
           .map(this::songFromTrack)
           .collect(Collectors.toList());
