@@ -96,7 +96,7 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
         "Two-letter country code of your Spotify account",
         false,
         "DE",
-        new TextBox<>(DefaultStringConverter.INSTANCE),
+        new TextBox(),
         countryCode -> {
           if (countryCode.length() != 2) {
             return "Country code must have two letters";
