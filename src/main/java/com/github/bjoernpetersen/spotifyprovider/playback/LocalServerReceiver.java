@@ -1,7 +1,7 @@
-package com.github.bjoernpetersen.spotifyprovider;
+package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import com.github.bjoernpetersen.jmusicbot.Loggable;
-import com.github.bjoernpetersen.spotifyprovider.TokenRefresher.TokenValues;
+import com.github.bjoernpetersen.spotifyprovider.playback.TokenRefresher.TokenValues;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.mortbay.jetty.Connector;
@@ -19,7 +17,7 @@ import org.mortbay.jetty.Request;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
 
-class LocalServerReceiver implements Loggable {
+final class LocalServerReceiver implements Loggable {
 
   private static final String STATE_KEY = "state";
   private static final String ACCESS_TOKEN_KEY = "access_token";

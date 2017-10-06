@@ -1,7 +1,7 @@
-package com.github.bjoernpetersen.spotifyprovider;
+package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import com.github.bjoernpetersen.jmusicbot.Loggable;
-import com.github.bjoernpetersen.spotifyprovider.TokenRefresher.TokenValues;
+import com.github.bjoernpetersen.spotifyprovider.playback.TokenRefresher.TokenValues;
 import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;

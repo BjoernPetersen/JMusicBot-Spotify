@@ -1,30 +1,34 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackStateListener.PlaybackState;
-import com.github.bjoernpetersen.spotifyprovider.Token;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import com.mashape.unirest.request.GetRequest;
 import com.mashape.unirest.request.HttpRequestWithBody;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-class PlaybackControl {
+final class PlaybackControl {
 
   @Nonnull
   private static final Logger log = Logger.getLogger(PlaybackControl.class.getName());
 
   private static final String AUTHORIZATION_HEADER = "Authorization";
   private static final String BASE_URL = "https://api.spotify.com/v1/me/player";
+  private static final String DEVICE_ID = "device_id";
 
   @Nonnull
   private final Token token;
 
-  public PlaybackControl(@Nonnull Token token) {
+  PlaybackControl(@Nonnull Token token) {
     this.token = token;
   }
 
@@ -32,8 +36,49 @@ class PlaybackControl {
     return "Bearer " + token.getToken();
   }
 
-  public void play(String songId) throws PlaybackException {
-    int status = playImpl(songId);
+  @Nullable
+  List<Device> getDevices() {
+    List<Device> result = getDevicesImpl();
+    if (result != null) {
+      return result;
+    }
+
+    try {
+      log.warning("getDevices returned 202");
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      log.finer("Interrupted during waiting for 202");
+      return null;
+    }
+
+    return getDevicesImpl();
+  }
+
+  @Nullable
+  private List<Device> getDevicesImpl() {
+    GetRequest request = Unirest.get(BASE_URL + "/devices")
+        .header(AUTHORIZATION_HEADER, getAuthString());
+
+    HttpResponse<JsonNode> response;
+    try {
+      response = request.asJson();
+    } catch (UnirestException e) {
+      return null;
+    }
+
+    if (response.getStatus() != 200) {
+      return null;
+    }
+
+    JSONArray devices = response.getBody().getObject().getJSONArray("devices");
+    return IntStream.range(0, devices.length())
+        .mapToObj(devices::getJSONObject)
+        .map(d -> new Device(d.getString("id"), d.getString("name")))
+        .collect(Collectors.toList());
+  }
+
+  public void play(@Nonnull String deviceId, String songId) throws PlaybackException {
+    int status = playImpl(deviceId, songId);
     if (status == 202) {
       try {
         log.warning("Play did return 202.");
@@ -41,15 +86,15 @@ class PlaybackControl {
       } catch (InterruptedException e) {
         throw new PlaybackException("Interrupted while waiting for retry", e);
       }
-      status = playImpl(songId);
+      status = playImpl(deviceId, songId);
     }
     if (status != 204) {
       throw new PlaybackException("Status is not 204: " + status);
     }
   }
 
-  public void resume() throws PlaybackException {
-    int status = playImpl(null);
+  public void resume(@Nonnull String deviceId) throws PlaybackException {
+    int status = playImpl(deviceId, null);
     if (status == 202) {
       try {
         log.warning("Play returned 202.");
@@ -57,16 +102,18 @@ class PlaybackControl {
       } catch (InterruptedException e) {
         throw new PlaybackException("Interrupted while waiting for retry", e);
       }
-      status = playImpl(null);
+      status = playImpl(deviceId, null);
     }
     if (status != 204) {
       throw new PlaybackException("Status is not 204: " + status);
     }
   }
 
-  private int playImpl(@Nullable String songId) throws PlaybackException {
+  private int playImpl(@Nonnull String deviceId, @Nullable String songId) throws PlaybackException {
     HttpRequestWithBody request = Unirest.put(BASE_URL + "/play")
-        .header(AUTHORIZATION_HEADER, getAuthString());
+        .header(AUTHORIZATION_HEADER, getAuthString())
+        .queryString(DEVICE_ID, deviceId);
+
     if (songId != null) {
       request.body(new JSONObject().put("uris", new JSONArray().put(toUriString(songId))));
     }
@@ -78,8 +125,8 @@ class PlaybackControl {
     }
   }
 
-  public void pause() throws PlaybackException {
-    int status = pauseImpl();
+  public void pause(@Nonnull String deviceId) throws PlaybackException {
+    int status = pauseImpl(deviceId);
     if (status == 202) {
       try {
         log.warning("Pause returned 202.");
@@ -87,16 +134,18 @@ class PlaybackControl {
       } catch (InterruptedException e) {
         throw new PlaybackException("Interrupted while waiting for retry", e);
       }
-      status = pauseImpl();
+      status = pauseImpl(deviceId);
     }
     if (status != 204) {
       throw new PlaybackException("Status is not 204: " + status);
     }
   }
 
-  private int pauseImpl() throws PlaybackException {
+  private int pauseImpl(@Nonnull String deviceId) throws PlaybackException {
     try {
-      return Unirest.put(BASE_URL + "/pause").header(AUTHORIZATION_HEADER, getAuthString())
+      return Unirest.put(BASE_URL + "/pause")
+          .header(AUTHORIZATION_HEADER, getAuthString())
+          .queryString(DEVICE_ID, deviceId)
           .asJson().getStatus();
     } catch (UnirestException e) {
       throw new PlaybackException(e);

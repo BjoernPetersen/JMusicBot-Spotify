@@ -1,4 +1,4 @@
-package com.github.bjoernpetersen.spotifyprovider;
+package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import java.io.IOException;
 import java.util.Date;

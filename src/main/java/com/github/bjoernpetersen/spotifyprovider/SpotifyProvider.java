@@ -8,44 +8,30 @@ import com.github.bjoernpetersen.jmusicbot.Song;
 import com.github.bjoernpetersen.jmusicbot.SongLoader;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
-import com.github.bjoernpetersen.jmusicbot.config.ui.DefaultStringConverter;
 import com.github.bjoernpetersen.jmusicbot.config.ui.TextBox;
 import com.github.bjoernpetersen.jmusicbot.platform.Platform;
 import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
-import com.github.bjoernpetersen.spotifyprovider.TokenRefresher.TokenValues;
 import com.github.bjoernpetersen.spotifyprovider.playback.SpotifyPlaybackFactory;
-import com.google.api.client.auth.oauth2.BrowserClientRequestUrl;
+import com.github.bjoernpetersen.spotifyprovider.playback.Token;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.exceptions.WebApiException;
 import com.wrapper.spotify.models.Image;
 import com.wrapper.spotify.models.SimpleArtist;
 import com.wrapper.spotify.models.Track;
-import java.awt.Desktop;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class SpotifyProvider implements Loggable, SpotifyProviderBase {
 
-  private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
-  private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
-
-  private Config.StringEntry accessToken;
-  private Config.StringEntry tokenExpiration;
   private Config.ReadOnlyStringEntry market;
 
   private Token token;
@@ -83,13 +69,6 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
   @Nonnull
   @Override
   public List<? extends Entry> initializeConfigEntries(@Nonnull Config config) {
-    accessToken = config.new StringEntry(getClass(), "accessToken", "OAuth access token", true);
-    tokenExpiration = config.new StringEntry(
-        getClass(),
-        "tokenExpiration",
-        "Token expiration date",
-        true
-    );
     market = config.new StringEntry(
         getClass(),
         "market",
@@ -104,17 +83,13 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
           return null;
         }
     );
+
     return Collections.singletonList(market);
   }
 
   @Override
-  public void dereferenceConfigEntries() {
-    accessToken.destruct();
-    tokenExpiration.destruct();
+  public void destructConfigEntries() {
     market.destruct();
-
-    accessToken = null;
-    tokenExpiration = null;
     market = null;
   }
 
@@ -126,26 +101,18 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
   @Override
   public void initialize(@Nonnull InitStateWriter initStateWriter,
       @Nonnull PlaybackFactoryManager manager) throws InitializationException {
-    try {
-      initStateWriter.state("Retrieving OAuth token");
-      this.token = initAuth();
-      initStateWriter.state("OAuth token received");
-    } catch (IOException e) {
-      throw new InitializationException("Error authorizing", e);
-    }
-
+    SpotifyPlaybackFactory factory = manager.getFactory(SpotifyPlaybackFactory.class);
+    this.token = factory.getToken();
     api = Api.builder()
         .accessToken(token.getToken())
         .build();
     token.addListener(t -> api.setAccessToken(t.getToken()));
-
-    SpotifyPlaybackFactory factory = manager.getFactory(SpotifyPlaybackFactory.class);
     songBuilder = initializeSongBuilder(factory);
   }
 
   private Song.Builder initializeSongBuilder(SpotifyPlaybackFactory factory) {
     return new Song.Builder()
-        .playbackSupplier(song -> factory.getPlayback(token, song.getId()))
+        .playbackSupplier(song -> factory.getPlayback(song.getId()))
         .songLoader(SongLoader.DUMMY)
         .provider(this);
   }
@@ -153,62 +120,8 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
   @Override
   public void close() throws IOException {
     api = null;
-    token = null;
     songBuilder = null;
-  }
-
-  private Token initAuth() throws IOException {
-    if (accessToken.getValue() != null && tokenExpiration.getValue() != null) {
-      String token = accessToken.getValue();
-      String expirationString = tokenExpiration.getValue();
-      long expiration = Long.parseUnsignedLong(expirationString);
-      Date expirationDate = new Date(expiration);
-      Token result = new Token(token, expirationDate, this::authorize);
-      // if it's expired, this call will refresh the token
-      result.getToken();
-      return result;
-    } else {
-      TokenValues values = authorize();
-      return new Token(values, this::authorize);
-    }
-  }
-
-  private TokenValues authorize() throws IOException {
-    String state = generateRandomString();
-    LocalServerReceiver receiver = null;
-    receiver = new LocalServerReceiver(50336, state);
-
-    URL redirectUrl = receiver.getRedirectUrl();
-
-    BrowserClientRequestUrl url = new BrowserClientRequestUrl(SPOTIFY_URL, CLIENT_ID)
-        .setState(state)
-        .setScopes(Arrays.asList("user-modify-playback-state", "user-read-playback-state"))
-        .setRedirectUri(redirectUrl.toExternalForm());
-
-    try {
-      Desktop.getDesktop().browse(new URL(url.build()).toURI());
-    } catch (URISyntaxException e) {
-      throw new IOException(e);
-    }
-
-    try {
-      TokenValues token = receiver.waitForToken(1, TimeUnit.MINUTES);
-      if (token == null) {
-        throw new IOException("Received null token.");
-      }
-
-      accessToken.set(token.getToken());
-      tokenExpiration.set(String.valueOf(token.getExpirationDate().getTime()));
-
-      return token;
-    } catch (InterruptedException e) {
-      throw new IOException("Not authenticated within 1 minute.", e);
-    }
-  }
-
-  private String generateRandomString() {
-    SecureRandom ran = new SecureRandom();
-    return Integer.toString(ran.nextInt(Integer.MAX_VALUE));
+    token = null;
   }
 
   @Nonnull

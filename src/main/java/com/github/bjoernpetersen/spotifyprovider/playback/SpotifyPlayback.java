@@ -3,15 +3,16 @@ package com.github.bjoernpetersen.spotifyprovider.playback;
 import com.github.bjoernpetersen.jmusicbot.Loggable;
 import com.github.bjoernpetersen.jmusicbot.playback.AbstractPlayback;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackStateListener.PlaybackState;
-import com.github.bjoernpetersen.spotifyprovider.Token;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
-class SpotifyPlayback extends AbstractPlayback implements Loggable {
+final class SpotifyPlayback extends AbstractPlayback implements Loggable {
 
+  @Nonnull
+  private final String deviceId;
   @Nonnull
   private final String songId;
   @Nonnull
@@ -21,7 +22,8 @@ class SpotifyPlayback extends AbstractPlayback implements Loggable {
 
   private boolean isStarted = false;
 
-  SpotifyPlayback(@Nonnull Token token, @Nonnull String songId) {
+  SpotifyPlayback(@Nonnull Token token, @Nonnull String deviceId, @Nonnull String songId) {
+    this.deviceId = deviceId;
     this.songId = songId;
     this.control = new PlaybackControl(token);
     this.stateChecker = Executors.newSingleThreadScheduledExecutor(
@@ -36,9 +38,9 @@ class SpotifyPlayback extends AbstractPlayback implements Loggable {
   public void play() {
     try {
       if (isStarted) {
-        control.resume();
+        control.resume(deviceId);
       } else {
-        control.play(songId);
+        control.play(deviceId, songId);
         isStarted = true;
       }
     } catch (PlaybackException e) {
@@ -49,7 +51,7 @@ class SpotifyPlayback extends AbstractPlayback implements Loggable {
   @Override
   public void pause() {
     try {
-      control.pause();
+      control.pause(deviceId);
     } catch (PlaybackException e) {
       logSevere(e, "Could not pause");
     }

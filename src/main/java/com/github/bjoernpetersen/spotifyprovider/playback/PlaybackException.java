@@ -1,6 +1,6 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
-class PlaybackException extends Exception {
+final class PlaybackException extends Exception {
 
   public PlaybackException() {
   }
