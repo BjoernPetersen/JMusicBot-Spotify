@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
-public final class SpotifySuggester implements Suggester, Loggable {
+public final class PlaylistSuggester implements Suggester, Loggable {
 
   private Config config;
   private Config.StringEntry userId;
@@ -133,7 +133,7 @@ public final class SpotifySuggester implements Suggester, Loggable {
             new ConfigValueConverter<Config.StringEntry, PlaylistChoice.PlaylistId, PlaylistChoice.PlaylistId>() {
               @Override
               public PlaylistChoice.PlaylistId getWithoutDefault(Config.StringEntry stringEntry) {
-                String playlistOwnerId = SpotifySuggester.this.playlistOwnerId
+                String playlistOwnerId = PlaylistSuggester.this.playlistOwnerId
                     .getValueWithoutDefault();
                 String playlistId = stringEntry.getValueWithoutDefault();
                 if (playlistOwnerId == null || playlistId == null) {
