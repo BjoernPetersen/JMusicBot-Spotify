@@ -3,9 +3,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.bjoernpetersen</groupId>
-  <artifactId>jmusic-spotify</artifactId>
-  <version>0.6.0-SNAPSHOT</version>
-  <url>https://github.com/BjoernPetersen/JMusic-Spotify</url>
+  <artifactId>musicbot-spotify</artifactId>
+  <version>0.6.0</version>
+  <url>https://github.com/BjoernPetersen/JMusicBot-Spotify</url>
   <description>TODO</description>
   <name>${project.groupId}:${project.artifactId}</name>
   <licenses>
@@ -22,10 +22,10 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:https://github.com/BjoernPetersen/JMusic-Spotify.git</connection>
-    <developerConnection>scm:git:git@github.com:BjoernPetersen/JMusic-Spotify.git
+    <connection>scm:git:https://github.com/BjoernPetersen/JMusicBot-Spotify.git</connection>
+    <developerConnection>scm:git:git@github.com:BjoernPetersen/JMusicBot-Spotify.git
     </developerConnection>
-    <url>https://github.com/BjoernPetersen/JMusic-Spotify</url>
+    <url>https://github.com/BjoernPetersen/JMusicBot-Spotify</url>
   </scm>
   <repositories>
     <repository>
@@ -39,84 +39,95 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <junit.version>4.12</junit.version>
+    <jsr.version>3.0.2</jsr.version>
+    <musicbot.version>0.10.0</musicbot.version>
+
+    <spotifywebapi.version>1.5.0</spotifywebapi.version>
+    <oauthclient.version>1.22.0</oauthclient.version>
+    <unirest.version>1.4.9</unirest.version>
+    <httpasync.version>4.0.2</httpasync.version>
+    <httpclient.version>4.3.6</httpclient.version>
+    <json.version>20140107</json.version>
   </properties>
   <dependencies>
     <dependency>
       <artifactId>junit</artifactId>
       <groupId>junit</groupId>
-      <version>4.12</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
-      <version>3.0.2</version>
+      <version>${jsr.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.bjoernpetersen</groupId>
       <artifactId>musicbot</artifactId>
-      <version>0.10.0-SNAPSHOT</version>
+      <version>${musicbot.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>se.michaelthelin.spotify</groupId>
       <artifactId>spotify-web-api-java</artifactId>
-      <version>1.5.0</version>
+      <version>${spotifywebapi.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.oauth-client</groupId>
       <artifactId>google-oauth-client</artifactId>
-      <version>1.22.0</version>
+      <version>${oauthclient.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.oauth-client</groupId>
       <artifactId>google-oauth-client-jetty</artifactId>
-      <version>1.22.0</version>
+      <version>${oauthclient.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client-jackson2</artifactId>
-      <version>1.22.0</version>
+      <version>${oauthclient.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
-      <version>1.22.0</version>
+      <version>${oauthclient.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.mashape.unirest</groupId>
       <artifactId>unirest-java</artifactId>
-      <version>1.4.9</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.3.6</version>
+      <version>${unirest.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpasyncclient</artifactId>
-      <version>4.0.2</version>
+      <version>${httpasync.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${httpclient.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpmime</artifactId>
-      <version>4.3.6</version>
+      <version>${httpclient.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20140107</version>
+      <version>${json.version}</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
