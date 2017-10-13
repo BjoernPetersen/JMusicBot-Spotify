@@ -2,9 +2,8 @@ package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import com.github.bjoernpetersen.jmusicbot.InitStateWriter;
 import com.github.bjoernpetersen.jmusicbot.InitializationException;
+import com.github.bjoernpetersen.jmusicbot.Loggable;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
-import com.github.bjoernpetersen.jmusicbot.config.Config.StringEntry;
-import com.github.bjoernpetersen.jmusicbot.config.ui.ActionButton;
 import com.github.bjoernpetersen.jmusicbot.platform.HostServices;
 import com.github.bjoernpetersen.spotifyprovider.playback.TokenRefresher.TokenValues;
 import com.google.api.client.auth.oauth2.BrowserClientRequestUrl;
@@ -17,7 +16,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
-public final class Authenticator implements AutoCloseable {
+public final class Authenticator implements AutoCloseable, Loggable {
 
   private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
   private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
@@ -33,15 +32,7 @@ public final class Authenticator implements AutoCloseable {
         "accessToken",
         "OAuth access token",
         true,
-        null,
-        new ActionButton("Authorize now", () -> {
-          try {
-            initToken(InitStateWriter.LOG);
-            return true;
-          } catch (InitializationException e) {
-            return false;
-          }
-        })
+        null
     );
     tokenExpiration = config.new StringEntry(
         getClass(),
@@ -49,10 +40,6 @@ public final class Authenticator implements AutoCloseable {
         "Token expiration date",
         true
     );
-  }
-
-  public StringEntry getAccessToken() {
-    return accessToken;
   }
 
   @Nonnull

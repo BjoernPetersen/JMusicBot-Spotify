@@ -14,9 +14,9 @@ import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
-import com.github.bjoernpetersen.spotifyprovider.playback.Authenticator;
 import com.github.bjoernpetersen.spotifyprovider.playback.SpotifyPlaybackFactory;
 import com.github.bjoernpetersen.spotifyprovider.playback.Token;
+import com.google.common.collect.Lists;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.exceptions.WebApiException;
 import com.wrapper.spotify.models.Image;
@@ -195,6 +195,22 @@ public final class SpotifyProvider implements Loggable, SpotifyProviderBase {
     } catch (IOException | WebApiException e) {
       throw new NoSuchSongException("Error looking up song: " + songId, e);
     }
+  }
+
+  @Nonnull
+  @Override
+  public List<Song> lookupBatch(@Nonnull List<String> ids) {
+    List<Song> result = new ArrayList<>(ids.size());
+    for (List<String> subIds : Lists.partition(ids, 50)) {
+      try {
+        api.getTracks(subIds).build().get().stream()
+            .map(this::songFromTrack)
+            .forEach(result::add);
+      } catch (IOException | WebApiException e) {
+        logInfo(e, "Could not lookup IDs.");
+      }
+    }
+    return Collections.unmodifiableList(result);
   }
 
   @Nonnull

@@ -83,11 +83,6 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
     if (device.getValue() == null) {
       missing.add(device);
     }
-    try (Authenticator auth = new Authenticator(config)) {
-      if (!auth.hasToken()) {
-        missing.add(auth.getAccessToken());
-      }
-    }
     return missing;
   }
 

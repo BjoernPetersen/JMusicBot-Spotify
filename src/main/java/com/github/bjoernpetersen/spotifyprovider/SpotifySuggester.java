@@ -11,7 +11,6 @@ import com.github.bjoernpetersen.jmusicbot.config.ui.ConfigValueConverter;
 import com.github.bjoernpetersen.jmusicbot.platform.Platform;
 import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.provider.DependencyMap;
-import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
 import com.github.bjoernpetersen.jmusicbot.provider.Suggester;
 import com.github.bjoernpetersen.spotifyprovider.playback.Authenticator;
@@ -176,11 +175,6 @@ public final class SpotifySuggester implements Suggester, Loggable {
     if (playlistId.getValue() == null || playlistOwnerId.getValue() == null) {
       missing.add(playlistId);
     }
-    try (Authenticator auth = new Authenticator(config)) {
-      if (!auth.hasToken()) {
-        missing.add(auth.getAccessToken());
-      }
-    }
     return missing;
   }
 
@@ -287,20 +281,10 @@ public final class SpotifySuggester implements Suggester, Loggable {
     }
 
     List<PlaylistTrack> tracks = playlist.getItems();
-    List<Song> result = new ArrayList<>(tracks.size());
-    for (PlaylistTrack track : tracks) {
-      String id = track.getTrack().getId();
-      Song song;
-      try {
-        song = provider.lookup(id);
-      } catch (NoSuchSongException e) {
-        logFine(e, "Could not lookup song: " + id + " (" + track.getTrack().getName() + ")");
-        continue;
-      }
-      result.add(song);
-    }
+    List<String> ids = tracks.stream().map(t -> t.getTrack().getId()).collect(Collectors.toList());
+
     // TODO add the full list instead of just the first page (100 tracks). API wrapper limitation.
-    return result;
+    return provider.lookupBatch(ids);
   }
 
   @Override
