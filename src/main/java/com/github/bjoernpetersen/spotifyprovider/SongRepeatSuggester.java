@@ -113,7 +113,7 @@ public class SongRepeatSuggester implements Suggester {
   @Nonnull
   @Override
   public String getReadableName() {
-    return "Spotify Repeater";
+    return "Spotify repeater";
   }
 
   @Nonnull

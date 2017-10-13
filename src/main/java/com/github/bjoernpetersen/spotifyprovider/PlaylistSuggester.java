@@ -87,7 +87,7 @@ public final class PlaylistSuggester implements Suggester, Loggable {
   @Nonnull
   @Override
   public String getReadableName() {
-    return "Spotify";
+    return "Spotify playlist";
   }
 
   @Nonnull
