@@ -5,110 +5,39 @@ import com.github.bjoernpetersen.jmusicbot.InitializationException;
 import com.github.bjoernpetersen.jmusicbot.config.Config;
 import com.github.bjoernpetersen.jmusicbot.config.Config.Entry;
 import com.github.bjoernpetersen.jmusicbot.config.ui.ChoiceBox;
-import com.github.bjoernpetersen.jmusicbot.platform.HostServices;
+import com.github.bjoernpetersen.jmusicbot.config.ui.DefaultStringConverter;
 import com.github.bjoernpetersen.jmusicbot.platform.Platform;
 import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.Playback;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
-import com.github.bjoernpetersen.spotifyprovider.playback.TokenRefresher.TokenValues;
-import com.google.api.client.auth.oauth2.BrowserClientRequestUrl;
 import com.mashape.unirest.http.Unirest;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.SecureRandom;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class SpotifyPlaybackFactory implements PlaybackFactory {
 
-  private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
-  private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
-
-  private HostServices hostServices;
-
+  private Config config;
   private Token token;
-  private Config.StringEntry accessToken;
-  private Config.StringEntry tokenExpiration;
   private Config.ReadOnlyStringEntry device;
 
-  private void initToken(@Nonnull InitStateWriter initStateWriter) throws InitializationException {
-    if (token == null) {
-      try {
-        initStateWriter.state("Retrieving OAuth token");
-        this.token = initAuth();
-        initStateWriter.state("OAuth token received");
-      } catch (IOException e) {
-        throw new InitializationException("Error authorizing", e);
-      }
-    }
-  }
 
-  @Nonnull
   public Token getToken() throws InitializationException {
     initToken(InitStateWriter.LOG);
     return token;
   }
 
-  private Token initAuth() throws IOException {
-    if (accessToken.getValue() != null && tokenExpiration.getValue() != null) {
-      String token = accessToken.getValue();
-      String expirationString = tokenExpiration.getValue();
-      long expiration = Long.parseUnsignedLong(expirationString);
-      Date expirationDate = new Date(expiration);
-      Token result = new Token(token, expirationDate, this::authorize);
-      // if it's expired, this call will refresh the token
-      result.getToken();
-      return result;
-    } else {
-      TokenValues values = authorize();
-      return new Token(values, this::authorize);
-    }
-  }
-
-  private URL getSpotifyUrl(String state, URL redirectUrl) {
-    try {
-      return new URL(new BrowserClientRequestUrl(SPOTIFY_URL, CLIENT_ID)
-          .setState(state)
-          .setScopes(Arrays.asList("user-modify-playback-state", "user-read-playback-state"))
-          .setRedirectUri(redirectUrl.toExternalForm()).build());
-    } catch (MalformedURLException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  private TokenValues authorize() throws IOException {
-    String state = generateRandomString();
-    LocalServerReceiver receiver = new LocalServerReceiver(50336, state);
-    URL redirectUrl = receiver.getRedirectUrl();
-
-    URL url = getSpotifyUrl(state, redirectUrl);
-    hostServices.openBrowser(url);
-
-    try {
-      TokenValues token = receiver.waitForToken(1, TimeUnit.MINUTES);
-      if (token == null) {
-        throw new IOException("Received null token.");
+  private void initToken(InitStateWriter initStateWriter)
+      throws InitializationException {
+    if (token == null) {
+      try (Authenticator authenticator = new Authenticator(config)) {
+        token = authenticator.initToken(initStateWriter);
       }
-
-      accessToken.set(token.getToken());
-      tokenExpiration.set(String.valueOf(token.getExpirationDate().getTime()));
-
-      return token;
-    } catch (InterruptedException e) {
-      throw new IOException("Not authenticated within 1 minute.", e);
     }
-  }
-
-  private String generateRandomString() {
-    SecureRandom ran = new SecureRandom();
-    return Integer.toString(ran.nextInt(Integer.MAX_VALUE));
   }
 
   @Nullable
@@ -135,38 +64,38 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
   @Nonnull
   @Override
   public List<? extends Entry> initializeConfigEntries(@Nonnull Config config) {
-    this.hostServices = config.getHostServices();
-    accessToken = config.new StringEntry(
-        getClass(),
-        "accessToken",
-        "OAuth access token",
-        true
-    );
-    tokenExpiration = config.new StringEntry(
-        getClass(),
-        "tokenExpiration",
-        "Token expiration date",
-        true
-    );
+    this.config = config;
     device = config.new StringEntry(
         getClass(),
         "deviceId",
         "Spotify device to use",
         false,
         null,
-        new ChoiceBox<>(this::getDevices, true)
+        new ChoiceBox<>(this::getDevices, DefaultStringConverter.INSTANCE, true)
     );
     return Collections.singletonList(device);
   }
 
+  @Nonnull
+  @Override
+  public List<? extends Entry> getMissingConfigEntries() {
+    List<Config.Entry> missing = new ArrayList<>(2);
+    if (device.getValue() == null) {
+      missing.add(device);
+    }
+    try (Authenticator auth = new Authenticator(config)) {
+      if (!auth.hasToken()) {
+        missing.add(auth.getAccessToken());
+      }
+    }
+    return missing;
+  }
+
   @Override
   public void destructConfigEntries() {
-    accessToken.destruct();
-    tokenExpiration.destruct();
-
-    accessToken = null;
-    tokenExpiration = null;
-    hostServices = null;
+    config = null;
+    device.destruct();
+    device = null;
   }
 
   @Override
@@ -180,7 +109,6 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
   @Override
   public void close() throws IOException {
     Unirest.shutdown();
-    token = null;
   }
 
   @Nonnull

@@ -3,7 +3,7 @@ package com.github.bjoernpetersen.spotifyprovider.playback;
 import com.github.bjoernpetersen.jmusicbot.config.ui.Choice;
 import javax.annotation.Nonnull;
 
-final class Device implements Choice {
+final class Device implements Choice<String> {
 
   private final String id;
   private final String name;

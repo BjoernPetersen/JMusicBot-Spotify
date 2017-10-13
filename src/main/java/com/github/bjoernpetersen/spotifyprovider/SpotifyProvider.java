@@ -14,6 +14,7 @@ import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
+import com.github.bjoernpetersen.spotifyprovider.playback.Authenticator;
 import com.github.bjoernpetersen.spotifyprovider.playback.SpotifyPlaybackFactory;
 import com.github.bjoernpetersen.spotifyprovider.playback.Token;
 import com.wrapper.spotify.Api;
@@ -22,6 +23,7 @@ import com.wrapper.spotify.models.Image;
 import com.wrapper.spotify.models.SimpleArtist;
 import com.wrapper.spotify.models.Track;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -30,13 +32,19 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class SpotifyProvider implements Loggable, SpotifyProviderBase {
+public final class SpotifyProvider implements Loggable, SpotifyProviderBase {
 
   private Config.ReadOnlyStringEntry market;
 
   private Token token;
   private Api api;
   private Song.Builder songBuilder;
+
+  @Nonnull
+  @Override
+  public Config.ReadOnlyStringEntry getMarket() {
+    return market;
+  }
 
   @Nonnull
   @Override
@@ -85,6 +93,16 @@ public class SpotifyProvider implements Loggable, SpotifyProviderBase {
     );
 
     return Collections.singletonList(market);
+  }
+
+  @Nonnull
+  @Override
+  public List<? extends Entry> getMissingConfigEntries() {
+    List<Entry> missing = new ArrayList<>(2);
+    if (market.checkError() != null) {
+      missing.add(market);
+    }
+    return missing;
   }
 
   @Override
