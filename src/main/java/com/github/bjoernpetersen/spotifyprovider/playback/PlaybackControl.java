@@ -1,20 +1,23 @@
 package com.github.bjoernpetersen.spotifyprovider.playback;
 
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackStateListener.PlaybackState;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import com.mashape.unirest.request.GetRequest;
-import com.mashape.unirest.request.HttpRequestWithBody;
+import com.github.bjoernpetersen.spotifyprovider.playback.api.Device;
+import com.github.bjoernpetersen.spotifyprovider.playback.api.Devices;
+import com.github.bjoernpetersen.spotifyprovider.playback.api.PlayRequest;
+import com.github.bjoernpetersen.spotifyprovider.playback.api.PlayerState;
+import com.github.bjoernpetersen.spotifyprovider.playback.api.Track;
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 
 final class PlaybackControl {
 
@@ -22,14 +25,29 @@ final class PlaybackControl {
   private static final Logger log = Logger.getLogger(PlaybackControl.class.getName());
 
   private static final String AUTHORIZATION_HEADER = "Authorization";
-  private static final String BASE_URL = "https://api.spotify.com/v1/me/player";
-  private static final String DEVICE_ID = "device_id";
+  private static final String BASE_URL = "https://api.spotify.com/v1/me/player/";
 
+  @Nonnull
+  private final SpotifyService service;
   @Nonnull
   private final Token token;
 
   PlaybackControl(@Nonnull Token token) {
     this.token = token;
+    OkHttpClient client = new OkHttpClient.Builder()
+        .addInterceptor(chain -> {
+          Request request = chain.request();
+          request = request.newBuilder()
+              .header(AUTHORIZATION_HEADER, getAuthString())
+              .build();
+          return chain.proceed(request);
+        })
+        .build();
+    service = new Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(client)
+        .addConverterFactory(JacksonConverterFactory.create())
+        .build().create(SpotifyService.class);
   }
 
   private String getAuthString() {
@@ -56,25 +74,18 @@ final class PlaybackControl {
 
   @Nullable
   private List<Device> getDevicesImpl() {
-    GetRequest request = Unirest.get(BASE_URL + "/devices")
-        .header(AUTHORIZATION_HEADER, getAuthString());
-
-    HttpResponse<JsonNode> response;
+    Response<Devices> response;
     try {
-      response = request.asJson();
-    } catch (UnirestException e) {
+      response = service.getDevices().execute();
+    } catch (IOException e) {
       return null;
     }
 
-    if (response.getStatus() != 200) {
+    if (response.code() != 200 || response.body() == null) {
       return null;
     }
 
-    JSONArray devices = response.getBody().getObject().getJSONArray("devices");
-    return IntStream.range(0, devices.length())
-        .mapToObj(devices::getJSONObject)
-        .map(d -> new Device(d.getString("id"), d.getString("name")))
-        .collect(Collectors.toList());
+    return response.body().getDevices();
   }
 
   public void play(@Nonnull String deviceId, String songId) throws PlaybackException {
@@ -110,17 +121,16 @@ final class PlaybackControl {
   }
 
   private int playImpl(@Nonnull String deviceId, @Nullable String songId) throws PlaybackException {
-    HttpRequestWithBody request = Unirest.put(BASE_URL + "/play")
-        .header(AUTHORIZATION_HEADER, getAuthString())
-        .queryString(DEVICE_ID, deviceId);
-
-    if (songId != null) {
-      request.body(new JSONObject().put("uris", new JSONArray().put(toUriString(songId))));
+    Call<ResponseBody> call;
+    if (songId == null) {
+      call = service.resume(deviceId);
+    } else {
+      call = service.play(deviceId, new PlayRequest(toUriString(songId)));
     }
 
     try {
-      return request.asJson().getStatus();
-    } catch (UnirestException e) {
+      return call.execute().code();
+    } catch (IOException e) {
       throw new PlaybackException(e);
     }
   }
@@ -143,11 +153,8 @@ final class PlaybackControl {
 
   private int pauseImpl(@Nonnull String deviceId) throws PlaybackException {
     try {
-      return Unirest.put(BASE_URL + "/pause")
-          .header(AUTHORIZATION_HEADER, getAuthString())
-          .queryString(DEVICE_ID, deviceId)
-          .asJson().getStatus();
-    } catch (UnirestException e) {
+      return service.pause(deviceId).execute().code();
+    } catch (IOException e) {
       throw new PlaybackException(e);
     }
   }
@@ -160,39 +167,33 @@ final class PlaybackControl {
    */
   @Nullable
   public PlaybackState checkState(String songId) throws PlaybackException {
-    HttpResponse<JsonNode> response;
+    Response<PlayerState> response;
     try {
-      response = Unirest.get(BASE_URL + "/currently-playing")
-          .header(AUTHORIZATION_HEADER, getAuthString())
-          .asJson();
-    } catch (UnirestException e) {
+      response = service.getState().execute();
+    } catch (IOException e) {
       throw new PlaybackException(e);
     }
 
-    if (response.getStatus() != 200) {
-      throw new PlaybackException("Returned status " + response.getStatus());
+    if (response.code() != 200) {
+      throw new PlaybackException("Returned status " + response.code());
     }
 
-    final String PROGRESS = "progress_ms";
-    final String IS_PLAYING = "is_playing";
-    final String ITEM = "item";
-
-    JSONObject body = response.getBody().getObject();
-    if (!(body.has(PROGRESS) && body.has(IS_PLAYING) && body.has(ITEM))) {
-      throw new PlaybackException("Missing a key");
+    PlayerState body = response.body();
+    if (body == null) {
+      throw new PlaybackException("Invalid body");
     }
 
-    if (!body.getBoolean(IS_PLAYING) && body.getLong(PROGRESS) == 0) {
+    if (!body.isPlaying() && body.getProgress() == 0) {
       return null;
     }
 
-    JSONObject item = body.getJSONObject(ITEM);
-    String id = item.getString("id");
+    Track track = body.getTrack();
+    String id = track.getId();
     if (!songId.equals(id)) {
       return null;
     }
 
-    return body.getBoolean(IS_PLAYING) ? PlaybackState.PLAY : PlaybackState.PAUSE;
+    return body.isPlaying() ? PlaybackState.PLAY : PlaybackState.PAUSE;
   }
 
   private String toUriString(String songId) {

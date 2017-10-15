@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.bjoernpetersen</groupId>
   <artifactId>musicbot-spotify</artifactId>
-  <version>0.6.0</version>
+  <version>0.6.1-SNAPSHOT</version>
   <url>https://github.com/BjoernPetersen/JMusicBot-Spotify</url>
   <description>TODO</description>
   <name>${project.groupId}:${project.artifactId}</name>
@@ -46,10 +46,8 @@
 
     <spotifywebapi.version>1.5.0</spotifywebapi.version>
     <oauthclient.version>1.22.0</oauthclient.version>
-    <unirest.version>1.4.9</unirest.version>
-    <httpasync.version>4.0.2</httpasync.version>
-    <httpclient.version>4.3.6</httpclient.version>
-    <json.version>20140107</json.version>
+    <retrofit.version>2.3.0</retrofit.version>
+    <jacksonconverter.version>2.3.0</jacksonconverter.version>
   </properties>
   <dependencies>
     <dependency>
@@ -101,33 +99,15 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.mashape.unirest</groupId>
-      <artifactId>unirest-java</artifactId>
-      <version>${unirest.version}</version>
+      <groupId>com.squareup.retrofit2</groupId>
+      <artifactId>retrofit</artifactId>
+      <version>${retrofit.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpasyncclient</artifactId>
-      <version>${httpasync.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${httpclient.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpmime</artifactId>
-      <version>${httpclient.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>${json.version}</version>
+      <groupId>com.squareup.retrofit2</groupId>
+      <artifactId>converter-jackson</artifactId>
+      <version>${jacksonconverter.version}</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

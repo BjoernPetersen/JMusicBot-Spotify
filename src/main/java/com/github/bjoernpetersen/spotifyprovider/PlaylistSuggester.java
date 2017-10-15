@@ -293,4 +293,5 @@ public final class PlaylistSuggester implements Suggester, Loggable {
     playlist = null;
     nextSongs = null;
   }
+
 }

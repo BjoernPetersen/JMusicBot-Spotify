@@ -10,7 +10,7 @@ import com.github.bjoernpetersen.jmusicbot.platform.Platform;
 import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.Playback;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
-import com.mashape.unirest.http.Unirest;
+import com.github.bjoernpetersen.spotifyprovider.playback.api.Device;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -103,7 +103,6 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
 
   @Override
   public void close() throws IOException {
-    Unirest.shutdown();
   }
 
   @Nonnull
