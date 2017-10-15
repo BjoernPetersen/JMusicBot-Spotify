@@ -23,6 +23,7 @@ import com.wrapper.spotify.models.SimplePlaylist;
 import com.wrapper.spotify.models.User;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +37,7 @@ public final class PlaylistSuggester implements Suggester, Loggable {
   private Config.StringEntry userId;
   private Config.StringEntry playlistId;
   private Config.StringEntry playlistOwnerId;
+  private Config.BooleanEntry shuffle;
 
   private SpotifyProviderBase provider;
   private Api api;
@@ -165,7 +167,13 @@ public final class PlaylistSuggester implements Suggester, Loggable {
               }
             }, true)
     );
-    return Collections.singletonList(playlistId);
+    shuffle = config.new BooleanEntry(
+        getClass(),
+        "shuffle",
+        "Whether the playlist should be shuffled",
+        true
+    );
+    return Arrays.asList(playlistId, shuffle);
   }
 
   @Nonnull
@@ -174,6 +182,7 @@ public final class PlaylistSuggester implements Suggester, Loggable {
     List<Entry> missing = new ArrayList<>(2);
     if (playlistId.getValue() == null || playlistOwnerId.getValue() == null) {
       missing.add(playlistId);
+      missing.add(shuffle);
     }
     return missing;
   }
@@ -281,7 +290,13 @@ public final class PlaylistSuggester implements Suggester, Loggable {
     }
 
     List<PlaylistTrack> tracks = playlist.getItems();
-    List<String> ids = tracks.stream().map(t -> t.getTrack().getId()).collect(Collectors.toList());
+    List<String> ids = tracks.stream()
+        .map(t -> t.getTrack().getId())
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    if (shuffle.getValue()) {
+      Collections.shuffle(ids);
+    }
 
     // TODO add the full list instead of just the first page (100 tracks). API wrapper limitation.
     return provider.lookupBatch(ids);
