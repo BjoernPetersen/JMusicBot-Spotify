@@ -79,7 +79,11 @@ final class SpotifyPlayback extends AbstractPlayback implements Loggable {
   @Override
   public void close() throws Exception {
     pause();
-    stateChecker.shutdownNow();
+    stateChecker.shutdown();
+    if (!stateChecker.awaitTermination(2, TimeUnit.SECONDS)) {
+      stateChecker.shutdownNow();
+    }
+
     super.close();
   }
 }
