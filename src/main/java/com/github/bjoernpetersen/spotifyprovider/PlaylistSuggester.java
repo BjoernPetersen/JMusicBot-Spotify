@@ -15,6 +15,8 @@ import com.github.bjoernpetersen.jmusicbot.provider.Provider;
 import com.github.bjoernpetersen.jmusicbot.provider.Suggester;
 import com.github.bjoernpetersen.spotifyprovider.playback.Authenticator;
 import com.github.bjoernpetersen.spotifyprovider.playback.Token;
+import com.github.zafarkhaja.semver.Version;
+import com.google.common.collect.ImmutableList;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.exceptions.WebApiException;
 import com.wrapper.spotify.models.Page;
@@ -90,6 +92,12 @@ public final class PlaylistSuggester implements Suggester, Loggable {
   @Override
   public String getReadableName() {
     return "Spotify playlist";
+  }
+
+  @Nonnull
+  @Override
+  public Version getMinSupportedVersion() {
+    return Version.forIntegers(0, 12, 0);
   }
 
   @Nonnull
@@ -179,12 +187,11 @@ public final class PlaylistSuggester implements Suggester, Loggable {
   @Nonnull
   @Override
   public List<? extends Entry> getMissingConfigEntries() {
-    List<Entry> missing = new ArrayList<>(2);
-    if (playlistId.getValue() == null || playlistOwnerId.getValue() == null) {
-      missing.add(playlistId);
-      missing.add(shuffle);
+    if (playlistId.isNullOrError() || playlistOwnerId.isNullOrError()) {
+      return ImmutableList.of(playlistId, playlistOwnerId);
+    } else {
+      return Collections.emptyList();
     }
-    return missing;
   }
 
   @Override

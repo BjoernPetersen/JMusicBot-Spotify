@@ -16,6 +16,7 @@ import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
 import com.github.bjoernpetersen.spotifyprovider.playback.SpotifyPlaybackFactory;
 import com.github.bjoernpetersen.spotifyprovider.playback.Token;
+import com.github.zafarkhaja.semver.Version;
 import com.google.common.collect.Lists;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.exceptions.WebApiException;
@@ -60,6 +61,12 @@ public final class SpotifyProvider implements Loggable, SpotifyProviderBase {
 
   @Nonnull
   @Override
+  public Version getMinSupportedVersion() {
+    return Version.forIntegers(0, 12, 0);
+  }
+
+  @Nonnull
+  @Override
   public Support getSupport(@Nonnull Platform platform) {
     switch (platform) {
       case ANDROID:
@@ -99,7 +106,7 @@ public final class SpotifyProvider implements Loggable, SpotifyProviderBase {
   @Override
   public List<? extends Entry> getMissingConfigEntries() {
     List<Entry> missing = new ArrayList<>(2);
-    if (market.checkError() != null) {
+    if (market.isNullOrError()) {
       missing.add(market);
     }
     return missing;

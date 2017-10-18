@@ -12,6 +12,7 @@ import com.github.bjoernpetersen.jmusicbot.provider.DependencyMap;
 import com.github.bjoernpetersen.jmusicbot.provider.NoSuchSongException;
 import com.github.bjoernpetersen.jmusicbot.provider.Provider;
 import com.github.bjoernpetersen.jmusicbot.provider.Suggester;
+import com.github.zafarkhaja.semver.Version;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,7 +40,7 @@ public class SongRepeatSuggester implements Suggester {
   }
 
   @Nullable
-  private String getSongId(String url) {
+  private String getSongId(@Nonnull String url) {
     try {
       URL parsed = new URL(url);
       String[] pathParts = parsed.getPath().split("/");
@@ -96,7 +97,7 @@ public class SongRepeatSuggester implements Suggester {
   @Nonnull
   @Override
   public List<? extends Entry> getMissingConfigEntries() {
-    if (songUrl.checkError() != null) {
+    if (songUrl.isNullOrError()) {
       return Collections.singletonList(songUrl);
     } else {
       return Collections.emptyList();
@@ -120,6 +121,12 @@ public class SongRepeatSuggester implements Suggester {
   @Override
   public Support getSupport(@Nonnull Platform platform) {
     return Support.YES;
+  }
+
+  @Nonnull
+  @Override
+  public Version getMinSupportedVersion() {
+    return Version.forIntegers(0, 12, 0);
   }
 
   @Override

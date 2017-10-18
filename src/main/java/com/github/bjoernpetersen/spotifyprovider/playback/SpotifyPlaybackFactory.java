@@ -11,8 +11,9 @@ import com.github.bjoernpetersen.jmusicbot.platform.Support;
 import com.github.bjoernpetersen.jmusicbot.playback.Playback;
 import com.github.bjoernpetersen.jmusicbot.playback.PlaybackFactory;
 import com.github.bjoernpetersen.spotifyprovider.playback.api.Device;
+import com.github.zafarkhaja.semver.Version;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +58,12 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
 
   @Nonnull
   @Override
+  public Version getMinSupportedVersion() {
+    return Version.forIntegers(0, 12, 0);
+  }
+
+  @Nonnull
+  @Override
   public Support getSupport(@Nonnull Platform platform) {
     return platform == Platform.UNKNOWN ? Support.MAYBE : Support.YES;
   }
@@ -79,11 +86,11 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
   @Nonnull
   @Override
   public List<? extends Entry> getMissingConfigEntries() {
-    List<Config.Entry> missing = new ArrayList<>(2);
-    if (device.getValue() == null) {
-      missing.add(device);
+    if (device.isNullOrError()) {
+      return ImmutableList.of(device);
+    } else {
+      return Collections.emptyList();
     }
-    return missing;
   }
 
   @Override
