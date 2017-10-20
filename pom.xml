@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.bjoernpetersen</groupId>
   <artifactId>musicbot-spotify</artifactId>
-  <version>0.8.0-SNAPSHOT</version>
+  <version>0.8.0</version>
   <url>https://github.com/BjoernPetersen/JMusicBot-Spotify</url>
   <description>TODO</description>
   <name>${project.groupId}:${project.artifactId}</name>
@@ -42,7 +42,7 @@
 
     <junit.version>4.12</junit.version>
     <jsr.version>3.0.2</jsr.version>
-    <musicbot.version>0.12.0-SNAPSHOT</musicbot.version>
+    <musicbot.version>0.12.1</musicbot.version>
 
     <spotifywebapi.version>1.5.0</spotifywebapi.version>
     <oauthclient.version>1.22.0</oauthclient.version>
