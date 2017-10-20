@@ -14,18 +14,31 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nonnull;
 
 public final class Authenticator implements AutoCloseable, Loggable {
 
   private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
   private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
+  private static final Lock lock = new ReentrantLock();
 
   private HostServices hostServices;
   private Config.StringEntry accessToken;
   private Config.StringEntry tokenExpiration;
 
   public Authenticator(Config config) {
+    try {
+      logFiner("Acquiring auth lock...");
+      if (!lock.tryLock(10, TimeUnit.SECONDS)) {
+        logWarning("Can't acquire Auth lock!");
+        throw new IllegalStateException();
+      }
+      logFiner("Lock acquired");
+    } catch (InterruptedException e) {
+      throw new IllegalStateException(e);
+    }
     hostServices = config.getHostServices();
     accessToken = config.new StringEntry(
         getClass(),
@@ -126,5 +139,7 @@ public final class Authenticator implements AutoCloseable, Loggable {
     accessToken = null;
     tokenExpiration = null;
     hostServices = null;
+    logFiner("Releasing Auth lock");
+    lock.unlock();
   }
 }

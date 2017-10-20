@@ -39,6 +39,10 @@ public class SongRepeatSuggester implements Suggester {
     return Collections.singletonList(song);
   }
 
+  @Override
+  public void removeSuggestion(@Nonnull Song song) {
+  }
+
   @Nullable
   private String getSongId(@Nonnull String url) {
     try {
