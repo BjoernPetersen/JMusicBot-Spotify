@@ -18,27 +18,28 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nonnull;
 
-public final class Authenticator implements AutoCloseable, Loggable {
+public final class Authenticator implements Loggable {
 
   private static final String SPOTIFY_URL = " https://accounts.spotify.com/authorize";
   private static final String CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a";
-  private static final Lock lock = new ReentrantLock();
+  private static volatile Authenticator instance;
 
+  private Lock lock;
   private HostServices hostServices;
   private Config.StringEntry accessToken;
   private Config.StringEntry tokenExpiration;
 
-  public Authenticator(Config config) {
-    try {
-      logFiner("Acquiring auth lock...");
-      if (!lock.tryLock(10, TimeUnit.SECONDS)) {
-        logWarning("Can't acquire Auth lock!");
-        throw new IllegalStateException();
+  public static Authenticator getInstance(Config config) {
+    synchronized (Authenticator.class) {
+      if (instance == null) {
+        instance = new Authenticator(config);
       }
-      logFiner("Lock acquired");
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(e);
+      return instance;
     }
+  }
+
+  public Authenticator(Config config) {
+    this.lock = new ReentrantLock();
     hostServices = config.getHostServices();
     accessToken = config.new StringEntry(
         getClass(),
@@ -65,16 +66,6 @@ public final class Authenticator implements AutoCloseable, Loggable {
     } catch (IOException e) {
       throw new InitializationException("Error authorizing", e);
     }
-  }
-
-  public boolean hasToken() {
-    if (accessToken.getValue() != null && tokenExpiration.getValue() != null) {
-      String expirationString = tokenExpiration.getValue();
-      long expiration = Long.parseUnsignedLong(expirationString);
-      Date expirationDate = new Date(expiration);
-      return !new Date().after(expirationDate);
-    }
-    return false;
   }
 
   private Token initAuth() throws IOException {
@@ -105,25 +96,40 @@ public final class Authenticator implements AutoCloseable, Loggable {
   }
 
   private TokenValues authorize() throws IOException {
-    String state = generateRandomString();
-    LocalServerReceiver receiver = new LocalServerReceiver(50336, state);
-    URL redirectUrl = receiver.getRedirectUrl();
-
-    URL url = getSpotifyUrl(state, redirectUrl);
-    hostServices.openBrowser(url);
-
+    lock.lock();
     try {
-      TokenValues token = receiver.waitForToken(1, TimeUnit.MINUTES);
-      if (token == null) {
-        throw new IOException("Received null token.");
+      try {
+        logFiner("Acquiring auth lock...");
+        if (!lock.tryLock(10, TimeUnit.SECONDS)) {
+          logWarning("Can't acquire Auth lock!");
+          throw new IllegalStateException();
+        }
+        logFiner("Lock acquired");
+      } catch (InterruptedException e) {
+        throw new IllegalStateException(e);
       }
+      String state = generateRandomString();
+      LocalServerReceiver receiver = new LocalServerReceiver(50336, state);
+      URL redirectUrl = receiver.getRedirectUrl();
 
-      accessToken.set(token.getToken());
-      tokenExpiration.set(String.valueOf(token.getExpirationDate().getTime()));
+      URL url = getSpotifyUrl(state, redirectUrl);
+      hostServices.openBrowser(url);
 
-      return token;
-    } catch (InterruptedException e) {
-      throw new IOException("Not authenticated within 1 minute.", e);
+      try {
+        TokenValues token = receiver.waitForToken(1, TimeUnit.MINUTES);
+        if (token == null) {
+          throw new IOException("Received null token.");
+        }
+
+        accessToken.set(token.getToken());
+        tokenExpiration.set(String.valueOf(token.getExpirationDate().getTime()));
+
+        return token;
+      } catch (InterruptedException e) {
+        throw new IOException("Not authenticated within 1 minute.", e);
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -132,14 +138,12 @@ public final class Authenticator implements AutoCloseable, Loggable {
     return Integer.toString(ran.nextInt(Integer.MAX_VALUE));
   }
 
-  @Override
-  public void close() {
+  void close() {
     accessToken.destruct();
     tokenExpiration.destruct();
     accessToken = null;
     tokenExpiration = null;
     hostServices = null;
-    logFiner("Releasing Auth lock");
-    lock.unlock();
+    instance = null;
   }
 }

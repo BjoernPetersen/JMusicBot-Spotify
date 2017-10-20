@@ -35,9 +35,7 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
   private void initToken(InitStateWriter initStateWriter)
       throws InitializationException {
     if (token == null) {
-      try (Authenticator authenticator = new Authenticator(config)) {
-        token = authenticator.initToken(initStateWriter);
-      }
+      token = Authenticator.getInstance(config).initToken(initStateWriter);
     }
   }
 
@@ -110,6 +108,7 @@ public final class SpotifyPlaybackFactory implements PlaybackFactory {
 
   @Override
   public void close() throws IOException {
+    Authenticator.getInstance(config).close();
   }
 
   @Nonnull

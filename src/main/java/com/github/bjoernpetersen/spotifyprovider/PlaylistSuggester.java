@@ -233,13 +233,11 @@ public final class PlaylistSuggester implements Suggester, Loggable {
     }
 
     Token token;
-    try (Authenticator authenticator = new Authenticator(config)) {
-      try {
-        token = authenticator.initToken(InitStateWriter.LOG);
-      } catch (InitializationException e) {
-        logInfo(e, "Could not retrieve token");
-        throw new IllegalStateException(e);
-      }
+    try {
+      token = Authenticator.getInstance(config).initToken(InitStateWriter.LOG);
+    } catch (InitializationException e) {
+      logInfo(e, "Could not retrieve token");
+      throw new IllegalStateException(e);
     }
 
     return api = Api.builder().accessToken(token.getToken()).build();

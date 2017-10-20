@@ -12,11 +12,11 @@ import javax.annotation.Nonnull;
 public final class Token implements Loggable {
 
   @Nonnull
+  private final TokenRefresher tokenRefresher;
+  @Nonnull
   private String token;
   @Nonnull
   private Date expiration;
-  @Nonnull
-  private final TokenRefresher tokenRefresher;
 
   @Nonnull
   private final List<Consumer<Token>> changeListener;
@@ -25,10 +25,10 @@ public final class Token implements Loggable {
     this(values.getToken(), values.getExpirationDate(), tokenRefresher);
   }
 
-  Token(@Nonnull String token, @Nonnull Date expiration, @Nonnull TokenRefresher tokenRefresher) {
+  Token(@Nonnull String token, @Nonnull Date expiration, TokenRefresher tokenRefresher) {
+    this.tokenRefresher = tokenRefresher;
     this.token = token;
     this.expiration = expiration;
-    this.tokenRefresher = tokenRefresher;
     this.changeListener = new LinkedList<>();
   }
 
