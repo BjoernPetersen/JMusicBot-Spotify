@@ -60,7 +60,7 @@ public final class PlaylistSuggester implements Suggester, Loggable {
   @Override
   public List<Song> getNextSuggestions(int maxLength) {
     int startIndex = nextIndex;
-    while (nextSongs.size() < Math.min(Math.max(50, maxLength), 10)) {
+    while (nextSongs.size() < Math.max(Math.min(50, maxLength), 1)) {
       // load more suggestions
       nextSongs.add(playlist.get(nextIndex));
       nextIndex = (nextIndex + 1) % playlist.size();
