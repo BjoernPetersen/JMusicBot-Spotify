@@ -198,9 +198,13 @@ public final class PlaylistSuggester implements Suggester, Loggable {
   public void destructConfigEntries() {
     config = null;
     playlistId.destruct();
+    playlistOwnerId.destruct();
     userId.destruct();
+    shuffle.destruct();
     playlistId = null;
+    playlistOwnerId = null;
     userId = null;
+    shuffle = null;
   }
 
   @Override
