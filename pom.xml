@@ -42,7 +42,7 @@
 
     <junit.version>4.12</junit.version>
     <jsr.version>3.0.2</jsr.version>
-    <musicbot.version>0.13.0-SNAPSHOT</musicbot.version>
+    <musicbot.version>0.14.3</musicbot.version>
 
     <spotifywebapi.version>1.5.0</spotifywebapi.version>
     <oauthclient.version>1.22.0</oauthclient.version>
