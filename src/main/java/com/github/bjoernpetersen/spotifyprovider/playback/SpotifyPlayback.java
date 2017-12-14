@@ -28,6 +28,7 @@ final class SpotifyPlayback extends AbstractPlayback implements Loggable {
     this.control = new PlaybackControl(token);
     this.stateChecker = Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder()
+            .setDaemon(true)
             .setNameFormat("Spotify-state-checker-%d")
             .build()
     );
