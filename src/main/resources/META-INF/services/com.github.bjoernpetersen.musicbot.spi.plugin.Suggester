@@ -1,2 +1,2 @@
-com.github.bjoernpetersen.spotify.PlaylistSuggester
-com.github.bjoernpetersen.spotify.SongRepeatSuggester
+com.github.bjoernpetersen.spotify.suggester.PlaylistSuggester
+com.github.bjoernpetersen.spotify.suggester.SongRepeatSuggester
