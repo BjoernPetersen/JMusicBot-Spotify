@@ -48,13 +48,13 @@ class SpotifyPlaybackFactory : PlaybackFactory {
             "Spotify device to use",
             DeviceSerializer,
             nullConfigChecker(),
-            ChoiceBox({ findDevices() }, true)
+            ChoiceBox(SimpleDevice::name, { findDevices() }, true)
         )
         return listOf(device)
     }
 
-    override fun createSecretEntries(config: Config): List<Config.Entry<*>> = emptyList()
-    override fun createStateEntries(config: Config) {}
+    override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
+    override fun createStateEntries(state: Config) {}
 
     @Throws(InitializationException::class)
     override fun initialize(initStateWriter: InitStateWriter) {

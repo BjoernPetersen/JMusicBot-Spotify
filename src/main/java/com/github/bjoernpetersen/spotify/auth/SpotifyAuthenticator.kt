@@ -2,7 +2,8 @@ package com.github.bjoernpetersen.spotify.auth
 
 import com.github.bjoernpetersen.musicbot.api.config.ActionButton
 import com.github.bjoernpetersen.musicbot.api.config.Config
-import com.github.bjoernpetersen.musicbot.spi.config.Named
+import com.github.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import com.github.bjoernpetersen.musicbot.api.config.SerializationException
 import com.github.bjoernpetersen.musicbot.spi.plugin.Bases
 import com.github.bjoernpetersen.musicbot.spi.plugin.GenericPlugin
 import com.github.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
@@ -36,7 +37,7 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
     @Inject
     private lateinit var browserOpener: BrowserOpener
 
-    private lateinit var tokenExpiration: Config.SerializedEntry<NamedInstant>
+    private lateinit var tokenExpiration: Config.SerializedEntry<Instant>
     private lateinit var accessToken: Config.StringEntry
 
     private var currentToken: Token? = null
@@ -51,7 +52,7 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
         }
         set(value) {
             field = value
-            tokenExpiration.set(value?.expiration.toNamed())
+            tokenExpiration.set(value?.expiration)
             accessToken.set(value?.value)
         }
 
@@ -60,7 +61,7 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
         if (accessToken.get() != null && tokenExpiration.get() != null) {
             val token = accessToken.get()!!
             val expirationDate = tokenExpiration.get()!!
-            val result = Token(token, expirationDate.instant)
+            val result = Token(token, expirationDate)
             // if it's expired, this call will refresh the token
             if (!result.isExpired()) return result
         }
@@ -99,14 +100,14 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
             val redirectUrl = receiver.redirectUrl
 
             val url = getSpotifyUrl(state, redirectUrl)
-            browserOpener.openBrowser(url)
+            browserOpener.openDocument(url)
 
             try {
                 val token = receiver.waitForToken(1, TimeUnit.MINUTES)
                     ?: throw IOException("Received null token.")
 
                 accessToken.set(token.value)
-                tokenExpiration.set(token.expiration.toNamed())
+                tokenExpiration.set(token.expiration)
 
                 return token
             } catch (e: InterruptedException) {
@@ -130,7 +131,7 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
             "Token expiration date",
             InstantSerializer,
             nullConfigChecker(),
-            ActionButton("Refresh") {
+            ActionButton("Refresh", ::toTimeString) {
                 try {
                     val token = authorize()
                     this.currentToken = token
@@ -158,12 +159,16 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
     private companion object {
         private const val SPOTIFY_URL = " https://accounts.spotify.com/authorize"
         private const val CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a"
+
+        private fun toTimeString(instant: Instant) = DateTimeFormatter.ISO_TIME.format(instant)
     }
 }
 
-private data class NamedInstant(val instant: Instant) : Named {
-    override val name: String
-        get() = DateTimeFormatter.ISO_TIME.format(instant)
-}
+private object InstantSerializer : ConfigSerializer<Instant> {
+    @Throws(SerializationException::class)
+    override fun deserialize(string: String): Instant {
+        return string.toLongOrNull()?.let(Instant::ofEpochSecond) ?: throw SerializationException()
+    }
 
-private fun Instant?.toNamed(): NamedInstant? = this?.let { NamedInstant(it) }
+    override fun serialize(obj: Instant): String = obj.epochSecond.toString()
+}

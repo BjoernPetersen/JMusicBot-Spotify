@@ -102,8 +102,8 @@ class PlaylistSuggester : Suggester {
         return listOf(shuffle)
     }
 
-    override fun createSecretEntries(config: Config): List<Config.Entry<*>> {
-        userId = config.StringEntry(
+    override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> {
+        userId = secrets.StringEntry(
             "userId",
             "",
             nullConfigChecker(),
@@ -111,17 +111,13 @@ class PlaylistSuggester : Suggester {
         return emptyList()
     }
 
-    override fun createStateEntries(config: Config) {
-        playlistId = config.SerializedEntry(
+    override fun createStateEntries(state: Config) {
+        playlistId = state.SerializedEntry(
             "playlistId",
             "",
             PlaylistChoice.Serializer,
             nullConfigChecker(),
-            ChoiceBox({ findPlaylists() }, true))
-    }
-
-    fun initializeConfigEntries(config: Config): List<Config.Entry<*>> {
-        return emptyList()
+            ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true))
     }
 
     override fun initialize(initStateWriter: InitStateWriter) {

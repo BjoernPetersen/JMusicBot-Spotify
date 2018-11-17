@@ -54,14 +54,14 @@ class SpotifyProvider : SpotifyProviderBase {
             "Country code of your Spotify account",
             CountryCodeSerializer,
             { if (it == CountryCode.UNDEFINED) "Required" else null },
-            ChoiceBox({ CountryCode.values().toList() }),
+            ChoiceBox(CountryCode::getName, { CountryCode.values().toList() }),
             CountryCode.DE
         )
         return listOf<Config.Entry<*>>(market)
     }
 
-    override fun createSecretEntries(config: Config): List<Config.Entry<*>> = emptyList()
-    override fun createStateEntries(config: Config) = Unit
+    override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
+    override fun createStateEntries(state: Config) = Unit
 
     override fun initialize(initStateWriter: InitStateWriter) {
         api = SpotifyApi.builder()

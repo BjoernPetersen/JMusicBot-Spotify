@@ -71,9 +71,9 @@ class SongRepeatSuggester : Suggester {
         return listOf(songUrl)
     }
 
-    override fun createSecretEntries(config: Config): List<Config.Entry<*>> = emptyList()
+    override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
 
-    override fun createStateEntries(config: Config) {}
+    override fun createStateEntries(state: Config) {}
 
     override fun close() {}
 }
