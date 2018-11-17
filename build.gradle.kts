@@ -51,7 +51,7 @@ dependencies {
         group = "io.github.microutils",
         name = "kotlin-logging",
         version = Version.KOTLIN_LOGGING)
-    implementation(
+    compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
         version = Version.MUSICBOT) {
