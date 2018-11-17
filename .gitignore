@@ -43,3 +43,9 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
+
+# Gradle #
+!gradle-wrapper.jar
+build/
+out/
+gradle.properties
