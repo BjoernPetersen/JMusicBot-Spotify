@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -5,6 +6,8 @@ plugins {
     idea
 
     id("com.github.spotbugs") version Version.SPOTBUGS
+
+    id("com.github.johnrengelman.shadow") version Version.SHADOW_JAR
 }
 
 group = "com.github.bjoernpetersen"
@@ -29,7 +32,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-
 
 tasks {
     "compileKotlin"(KotlinCompile::class) {
