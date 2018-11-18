@@ -41,6 +41,7 @@ class SpotifyPlaybackFactory : PlaybackFactory {
     }
 
     override val name: String = "Spotify"
+    override val description: String = "TODO"
 
     override fun createConfigEntries(config: Config): List<Config.Entry<*>> {
         device = config.SerializedEntry(

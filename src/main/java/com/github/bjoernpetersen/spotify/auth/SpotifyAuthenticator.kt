@@ -16,7 +16,10 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.security.SecureRandom
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
@@ -160,7 +163,9 @@ class SpotifyAuthenticator : SpotifyAuthenticatorBase {
         private const val SPOTIFY_URL = " https://accounts.spotify.com/authorize"
         private const val CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a"
 
-        private fun toTimeString(instant: Instant) = DateTimeFormatter.ISO_TIME.format(instant)
+        private fun toTimeString(instant: Instant) = DateTimeFormatter
+            .ofLocalizedTime(FormatStyle.SHORT)
+            .format(ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
     }
 }
 

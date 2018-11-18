@@ -40,6 +40,7 @@ class PlaylistSuggester : Suggester {
     private var nextSongs: LinkedList<Song> = LinkedList()
 
     override val name: String = "Spotify playlist"
+    override val description: String = "TODO"
     override var subject: String = name
         private set
 
@@ -99,7 +100,13 @@ class PlaylistSuggester : Suggester {
             "shuffle",
             "Whether the playlist should be shuffled",
             true)
-        return listOf(shuffle)
+        playlistId = config.SerializedEntry(
+            "playlistId",
+            "",
+            PlaylistChoice.Serializer,
+            nullConfigChecker(),
+            ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true))
+        return listOf(shuffle, playlistId)
     }
 
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> {
@@ -112,12 +119,6 @@ class PlaylistSuggester : Suggester {
     }
 
     override fun createStateEntries(state: Config) {
-        playlistId = state.SerializedEntry(
-            "playlistId",
-            "",
-            PlaylistChoice.Serializer,
-            nullConfigChecker(),
-            ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true))
     }
 
     override fun initialize(initStateWriter: InitStateWriter) {

@@ -44,6 +44,7 @@ class SpotifyProvider : SpotifyProviderBase {
         }
 
     override val name: String = "Spotify"
+    override val description: String = "TODO"
     override val subject: String = "Spotify"
     private val provider = NamedPlugin<Provider>(
         SpotifyProviderBase::class, subject)
@@ -54,7 +55,7 @@ class SpotifyProvider : SpotifyProviderBase {
             "Country code of your Spotify account",
             CountryCodeSerializer,
             { if (it == CountryCode.UNDEFINED) "Required" else null },
-            ChoiceBox(CountryCode::getName, { CountryCode.values().toList() }),
+            ChoiceBox(CountryCode::getName, { CountryCode.values().sortedBy { it.getName() } }),
             CountryCode.DE
         )
         return listOf<Config.Entry<*>>(market)

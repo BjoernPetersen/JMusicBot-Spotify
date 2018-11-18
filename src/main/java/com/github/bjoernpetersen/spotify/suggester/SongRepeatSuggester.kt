@@ -23,6 +23,7 @@ class SongRepeatSuggester : Suggester {
     private lateinit var song: Song
 
     override val name: String = "Spotify repeater"
+    override val description: String = "TODO"
 
     override val subject: String
         get() = song.title
