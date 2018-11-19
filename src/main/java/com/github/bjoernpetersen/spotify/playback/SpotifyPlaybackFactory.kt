@@ -59,11 +59,16 @@ class SpotifyPlaybackFactory : PlaybackFactory {
 
     @Throws(InitializationException::class)
     override fun initialize(initStateWriter: InitStateWriter) {
+        initStateWriter.state("Checking device config")
         if (device.get() == null) {
             throw InitializationException("No device selected")
         }
-        authenticator.token.also {
-            throw InitializationException("Not authenticated")
+
+        initStateWriter.state("Checking authentication")
+        try {
+            authenticator.token
+        } catch (e: Exception) {
+            throw InitializationException("Not authenticated", e)
         }
     }
 
