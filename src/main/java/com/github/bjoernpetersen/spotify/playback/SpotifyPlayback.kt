@@ -57,6 +57,7 @@ internal class SpotifyPlayback(
                 .device_id(deviceId)
                 .also {
                     if (!isStarted) {
+                        logger.debug { "Starting song" }
                         it.uris(JsonArray().apply {
                             songUri
                         })
@@ -68,7 +69,7 @@ internal class SpotifyPlayback(
                 .execute()
             isStarted = true
         } catch (e: SpotifyWebApiException) {
-            logger.error(e) { "Could not pause playback" }
+            logger.error(e) { "Could not play playback" }
         }
     }
 
