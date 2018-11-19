@@ -101,8 +101,8 @@ class PlaylistSuggester : Suggester {
             "Whether the playlist should be shuffled",
             true)
         playlistId = config.SerializedEntry(
-            "playlistId",
-            "",
+            "playlist",
+            "One of your public playlists to play",
             PlaylistChoice.Serializer,
             nullConfigChecker(),
             ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true))
