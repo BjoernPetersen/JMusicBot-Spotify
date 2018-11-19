@@ -94,7 +94,7 @@ private object DeviceSerializer : ConfigSerializer<SimpleDevice> {
     }
 
     override fun serialize(obj: SimpleDevice): String {
-        return obj.id
+        return "${obj.id};${obj.name}"
     }
 
 }
