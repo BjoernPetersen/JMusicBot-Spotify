@@ -19,6 +19,8 @@ import javax.inject.Inject
 @Bases(PlaybackFactory::class, SpotifyPlaybackFactory::class)
 class SpotifyPlaybackFactory : PlaybackFactory {
 
+    // TODO create base interface
+
     private val logger = KotlinLogging.logger { }
 
     @Inject

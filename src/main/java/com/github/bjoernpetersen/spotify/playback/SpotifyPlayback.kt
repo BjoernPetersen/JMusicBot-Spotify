@@ -55,11 +55,11 @@ internal class SpotifyPlayback(
         try {
             api.startResumeUsersPlayback()
                 .device_id(deviceId)
-                .also {
+                .apply {
                     if (!isStarted) {
                         logger.debug { "Starting song" }
-                        it.uris(JsonArray().apply {
-                            songUri
+                        uris(JsonArray().apply {
+                            add(songUri)
                         })
                         stateChecker.scheduleWithFixedDelay(::checkState,
                             2000, 3000, TimeUnit.MILLISECONDS)
