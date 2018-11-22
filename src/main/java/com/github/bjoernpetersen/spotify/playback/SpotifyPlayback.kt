@@ -99,10 +99,10 @@ internal class SpotifyPlayback(
     }
 
     override fun close() {
-        pause()
         if (!stateChecker.awaitTermination(2, TimeUnit.SECONDS)) {
             stateChecker.shutdownNow();
         }
+        pause()
         super.close()
     }
 }
