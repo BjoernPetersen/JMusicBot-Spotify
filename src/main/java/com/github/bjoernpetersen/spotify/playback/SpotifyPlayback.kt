@@ -48,6 +48,7 @@ internal class SpotifyPlayback(
                 .execute()
         } catch (e: SpotifyWebApiException) {
             logger.error(e) { "Could not pause playback" }
+            listener(PlaybackState.BROKEN)
         }
     }
 
@@ -70,6 +71,7 @@ internal class SpotifyPlayback(
             isStarted = true
         } catch (e: SpotifyWebApiException) {
             logger.error(e) { "Could not play playback" }
+            listener(PlaybackState.BROKEN)
         }
     }
 
@@ -80,6 +82,7 @@ internal class SpotifyPlayback(
                 .execute()!!
         } catch (e: SpotifyWebApiException) {
             logger.error(e) { "Could not check state" }
+            listener(PlaybackState.BROKEN)
             return
         }
 
