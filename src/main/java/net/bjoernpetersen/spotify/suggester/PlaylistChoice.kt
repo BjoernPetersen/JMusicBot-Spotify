@@ -1,7 +1,7 @@
-package com.github.bjoernpetersen.spotify.suggester
+package net.bjoernpetersen.spotify.suggester
 
-import com.github.bjoernpetersen.musicbot.api.config.ConfigSerializer
-import com.github.bjoernpetersen.musicbot.api.config.SerializationException
+import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import net.bjoernpetersen.musicbot.api.config.SerializationException
 
 internal data class PlaylistChoice(val id: String, val displayName: String) {
 

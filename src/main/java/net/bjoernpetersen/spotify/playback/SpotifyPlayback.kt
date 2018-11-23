@@ -1,14 +1,14 @@
-package com.github.bjoernpetersen.spotify.playback
+package net.bjoernpetersen.spotify.playback
 
-import com.github.bjoernpetersen.musicbot.spi.plugin.AbstractPlayback
-import com.github.bjoernpetersen.musicbot.spi.plugin.PlaybackState
-import com.github.bjoernpetersen.musicbot.spi.plugin.PlaybackStateListener
-import com.github.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.JsonArray
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import mu.KotlinLogging
+import net.bjoernpetersen.musicbot.spi.plugin.AbstractPlayback
+import net.bjoernpetersen.musicbot.spi.plugin.PlaybackState
+import net.bjoernpetersen.musicbot.spi.plugin.PlaybackStateListener
+import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 

@@ -1,15 +1,15 @@
-package com.github.bjoernpetersen.spotify.suggester
+package net.bjoernpetersen.spotify.suggester
 
-import com.github.bjoernpetersen.musicbot.api.Song
-import com.github.bjoernpetersen.musicbot.api.config.Config
-import com.github.bjoernpetersen.musicbot.api.config.TextBox
-import com.github.bjoernpetersen.musicbot.api.player.SongEntry
-import com.github.bjoernpetersen.musicbot.spi.plugin.Bases
-import com.github.bjoernpetersen.musicbot.spi.plugin.InitializationException
-import com.github.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
-import com.github.bjoernpetersen.musicbot.spi.plugin.Suggester
-import com.github.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import com.github.bjoernpetersen.spotify.provider.SpotifyProviderBase
+import net.bjoernpetersen.musicbot.api.Song
+import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.config.TextBox
+import net.bjoernpetersen.musicbot.api.player.SongEntry
+import net.bjoernpetersen.musicbot.spi.plugin.Bases
+import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
+import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
+import net.bjoernpetersen.musicbot.spi.plugin.Suggester
+import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
+import net.bjoernpetersen.spotify.provider.SpotifyProviderBase
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject

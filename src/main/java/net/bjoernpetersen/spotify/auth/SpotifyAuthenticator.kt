@@ -1,16 +1,16 @@
-package com.github.bjoernpetersen.spotify.auth
+package net.bjoernpetersen.spotify.auth
 
-import com.github.bjoernpetersen.musicbot.api.config.ActionButton
-import com.github.bjoernpetersen.musicbot.api.config.Config
-import com.github.bjoernpetersen.musicbot.api.config.ConfigSerializer
-import com.github.bjoernpetersen.musicbot.api.config.SerializationException
-import com.github.bjoernpetersen.musicbot.spi.plugin.Bases
-import com.github.bjoernpetersen.musicbot.spi.plugin.GenericPlugin
-import com.github.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import com.github.bjoernpetersen.musicbot.spi.util.BrowserOpener
-import com.github.bjoernpetersen.spotify.nullConfigChecker
 import com.google.api.client.auth.oauth2.BrowserClientRequestUrl
 import mu.KotlinLogging
+import net.bjoernpetersen.musicbot.api.config.ActionButton
+import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import net.bjoernpetersen.musicbot.api.config.SerializationException
+import net.bjoernpetersen.musicbot.spi.plugin.Bases
+import net.bjoernpetersen.musicbot.spi.plugin.GenericPlugin
+import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
+import net.bjoernpetersen.musicbot.spi.util.BrowserOpener
+import net.bjoernpetersen.spotify.nullConfigChecker
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL

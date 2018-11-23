@@ -1,4 +1,4 @@
-package com.github.bjoernpetersen.spotify.auth
+package net.bjoernpetersen.spotify.auth
 
 import mu.KotlinLogging
 import org.mortbay.jetty.Request

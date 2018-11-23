@@ -1,8 +1,8 @@
-package com.github.bjoernpetersen.spotify
+package net.bjoernpetersen.spotify
 
-import com.github.bjoernpetersen.musicbot.api.config.ConfigSerializer
-import com.github.bjoernpetersen.musicbot.api.config.SerializationException
 import com.neovisionaries.i18n.CountryCode
+import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import net.bjoernpetersen.musicbot.api.config.SerializationException
 
 internal object CountryCodeSerializer : ConfigSerializer<CountryCode> {
     override fun deserialize(string: String): CountryCode {

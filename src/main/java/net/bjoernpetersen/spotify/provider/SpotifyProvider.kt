@@ -1,26 +1,25 @@
-package com.github.bjoernpetersen.spotify.provider
+package net.bjoernpetersen.spotify.provider
 
-import com.github.bjoernpetersen.musicbot.api.NamedPlugin
-import com.github.bjoernpetersen.musicbot.api.Song
-import com.github.bjoernpetersen.musicbot.api.config.ChoiceBox
-import com.github.bjoernpetersen.musicbot.api.config.Config
-import com.github.bjoernpetersen.musicbot.spi.plugin.Bases
-import com.github.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
-import com.github.bjoernpetersen.musicbot.spi.plugin.Playback
-import com.github.bjoernpetersen.musicbot.spi.plugin.PlaybackSupplier
-import com.github.bjoernpetersen.musicbot.spi.plugin.Provider
-import com.github.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import com.github.bjoernpetersen.spotify.CountryCodeSerializer
-import com.github.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
-import com.github.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import com.google.common.collect.Lists
 import com.neovisionaries.i18n.CountryCode
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.specification.Track
 import mu.KotlinLogging
+import net.bjoernpetersen.musicbot.api.NamedPlugin
+import net.bjoernpetersen.musicbot.api.Song
+import net.bjoernpetersen.musicbot.api.config.ChoiceBox
+import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.spi.plugin.Bases
+import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
+import net.bjoernpetersen.musicbot.spi.plugin.Playback
+import net.bjoernpetersen.musicbot.spi.plugin.PlaybackSupplier
+import net.bjoernpetersen.musicbot.spi.plugin.Provider
+import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
+import net.bjoernpetersen.spotify.CountryCodeSerializer
+import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
+import net.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import java.io.IOException
-import java.util.*
 import javax.inject.Inject
 
 @Bases(SpotifyProviderBase::class)
@@ -146,6 +145,6 @@ class SpotifyProvider : SpotifyProviderBase {
                 logger.info(e) { "Could not look up some ID." }
             }
         }
-        return Collections.unmodifiableList(result)
+        return result.toList()
     }
 }

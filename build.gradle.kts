@@ -47,6 +47,11 @@ tasks {
     }
 }
 
+configurations.all {
+    // TODO remove or comment out when MusicBot refactor is released
+    resolutionStrategy.cacheChangingModulesFor(1, TimeUnit.MINUTES)
+}
+
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(

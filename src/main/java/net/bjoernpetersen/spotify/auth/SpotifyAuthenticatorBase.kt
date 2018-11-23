@@ -1,6 +1,6 @@
-package com.github.bjoernpetersen.spotify.auth
+package net.bjoernpetersen.spotify.auth
 
-import com.github.bjoernpetersen.musicbot.spi.plugin.GenericPlugin
+import net.bjoernpetersen.musicbot.spi.plugin.GenericPlugin
 
 private const val DESCRIPTION = "Provides Spotify authentication"
 

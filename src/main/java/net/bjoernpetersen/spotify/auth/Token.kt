@@ -1,4 +1,4 @@
-package com.github.bjoernpetersen.spotify.auth
+package net.bjoernpetersen.spotify.auth
 
 import java.time.Instant
 

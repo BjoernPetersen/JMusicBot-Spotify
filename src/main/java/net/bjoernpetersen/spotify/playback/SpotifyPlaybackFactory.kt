@@ -1,19 +1,19 @@
-package com.github.bjoernpetersen.spotify.playback
+package net.bjoernpetersen.spotify.playback
 
-import com.github.bjoernpetersen.musicbot.api.config.ChoiceBox
-import com.github.bjoernpetersen.musicbot.api.config.Config
-import com.github.bjoernpetersen.musicbot.api.config.ConfigSerializer
-import com.github.bjoernpetersen.musicbot.spi.plugin.Bases
-import com.github.bjoernpetersen.musicbot.spi.plugin.InitializationException
-import com.github.bjoernpetersen.musicbot.spi.plugin.Playback
-import com.github.bjoernpetersen.musicbot.spi.plugin.PlaybackFactory
-import com.github.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import com.github.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
-import com.github.bjoernpetersen.spotify.nullConfigChecker
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.miscellaneous.Device
 import mu.KotlinLogging
+import net.bjoernpetersen.musicbot.api.config.ChoiceBox
+import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import net.bjoernpetersen.musicbot.spi.plugin.Bases
+import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
+import net.bjoernpetersen.musicbot.spi.plugin.Playback
+import net.bjoernpetersen.musicbot.spi.plugin.PlaybackFactory
+import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
+import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
+import net.bjoernpetersen.spotify.nullConfigChecker
 import javax.inject.Inject
 
 @Bases(PlaybackFactory::class, SpotifyPlaybackFactory::class)
