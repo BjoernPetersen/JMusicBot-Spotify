@@ -7,7 +7,7 @@ import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
-import net.bjoernpetersen.musicbot.spi.plugin.Bases
+import net.bjoernpetersen.musicbot.spi.plugin.Base
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackFactory
@@ -16,7 +16,7 @@ import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
 import net.bjoernpetersen.spotify.nullConfigChecker
 import javax.inject.Inject
 
-@Bases(PlaybackFactory::class, SpotifyPlaybackFactory::class)
+@Base
 class SpotifyPlaybackFactory : PlaybackFactory {
 
     // TODO create base interface

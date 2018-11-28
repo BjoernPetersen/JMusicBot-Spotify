@@ -6,8 +6,6 @@ import net.bjoernpetersen.musicbot.api.config.ActionButton
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
 import net.bjoernpetersen.musicbot.api.config.SerializationException
-import net.bjoernpetersen.musicbot.spi.plugin.Bases
-import net.bjoernpetersen.musicbot.spi.plugin.GenericPlugin
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.musicbot.spi.util.BrowserOpener
 import net.bjoernpetersen.spotify.nullConfigChecker
@@ -26,7 +24,6 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 
-@Bases(GenericPlugin::class, SpotifyAuthenticatorBase::class)
 class SpotifyAuthenticator : SpotifyAuthenticatorBase {
 
     private val logger = KotlinLogging.logger { }

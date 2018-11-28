@@ -10,7 +10,6 @@ import net.bjoernpetersen.musicbot.api.NamedPlugin
 import net.bjoernpetersen.musicbot.api.Song
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
-import net.bjoernpetersen.musicbot.spi.plugin.Bases
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackSupplier
@@ -22,7 +21,6 @@ import net.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import java.io.IOException
 import javax.inject.Inject
 
-@Bases(SpotifyProviderBase::class)
 class SpotifyProvider : SpotifyProviderBase {
 
     private val logger = KotlinLogging.logger {}

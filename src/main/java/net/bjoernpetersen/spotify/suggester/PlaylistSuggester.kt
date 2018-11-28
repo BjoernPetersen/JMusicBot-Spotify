@@ -8,7 +8,7 @@ import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.Song
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
-import net.bjoernpetersen.musicbot.spi.plugin.Bases
+import net.bjoernpetersen.musicbot.spi.plugin.IdBase
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
@@ -19,7 +19,7 @@ import java.io.IOException
 import java.util.*
 import javax.inject.Inject
 
-@Bases(Suggester::class, PlaylistSuggester::class)
+@IdBase
 class PlaylistSuggester : Suggester {
 
     private val logger = KotlinLogging.logger {}
