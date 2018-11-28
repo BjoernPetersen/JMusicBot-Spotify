@@ -6,14 +6,12 @@ import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.specification.Track
 import mu.KotlinLogging
-import net.bjoernpetersen.musicbot.api.NamedPlugin
 import net.bjoernpetersen.musicbot.api.Song
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackSupplier
-import net.bjoernpetersen.musicbot.spi.plugin.Provider
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.CountryCodeSerializer
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
@@ -43,8 +41,6 @@ class SpotifyProvider : SpotifyProviderBase {
     override val name: String = "Spotify"
     override val description: String = "TODO"
     override val subject: String = "Spotify"
-    private val provider = NamedPlugin<Provider>(
-        SpotifyProviderBase::class, subject)
 
     override fun createConfigEntries(config: Config): List<Config.Entry<*>> {
         market = config.SerializedEntry(
@@ -82,7 +78,7 @@ class SpotifyProvider : SpotifyProviderBase {
         albumArtUrl: String?): Song {
         return Song(
             id = id,
-            provider = provider,
+            provider = this,
             title = title,
             description = description,
             duration = durationMs / 1000,
