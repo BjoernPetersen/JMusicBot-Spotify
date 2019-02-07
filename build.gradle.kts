@@ -1,13 +1,13 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version Version.KOTLIN
+    id("com.github.ben-manes.versions") version Plugin.VERSIONS
+    kotlin("jvm") version Plugin.KOTLIN
     idea
 
-    id("com.github.spotbugs") version Version.SPOTBUGS
+    id("com.github.spotbugs") version Plugin.SPOTBUGS_PLUGIN
 
-    id("com.github.johnrengelman.shadow") version Version.SHADOW_JAR
+    id("com.github.johnrengelman.shadow") version Plugin.SHADOW_JAR
 }
 
 group = "com.github.bjoernpetersen"
@@ -26,6 +26,7 @@ idea {
 
 spotbugs {
     isIgnoreFailures = true
+    toolVersion = Plugin.SPOTBUGS_TOOL
 }
 
 java {
@@ -57,52 +58,52 @@ dependencies {
     implementation(
         group = "io.github.microutils",
         name = "kotlin-logging",
-        version = Version.KOTLIN_LOGGING)
+        version = Lib.KOTLIN_LOGGING)
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
-        version = Version.MUSICBOT) {
+        version = Lib.MUSICBOT) {
         isChanging = true
     }
 
     implementation(
         group = "se.michaelthelin.spotify",
         name = "spotify-web-api-java",
-        version = Version.SPOTIFY)
+        version = Lib.SPOTIFY)
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client",
-        version = Version.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client-jetty",
-        version = Version.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.google.http-client",
         name = "google-http-client",
-        version = Version.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.google.http-client",
         name = "google-http-client-jackson2",
-        version = Version.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.squareup.retrofit2",
         name = "retrofit",
-        version = Version.RETROFIT)
+        version = Lib.RETROFIT)
     implementation(
         group = "com.squareup.retrofit2",
         name = "converter-jackson",
-        version = Version.RETROFIT)
+        version = Lib.RETROFIT)
 
 
     testImplementation(
         group = "org.junit.jupiter",
         name = "junit-jupiter-api",
-        version = Version.JUNIT)
+        version = Lib.JUNIT)
     testImplementation(
         group = "org.junit.jupiter",
         name = "junit-jupiter-engine",
-        version = Version.JUNIT)
-    testImplementation(group = "io.mockk", name = "mockk", version = Version.MOCK_K)
-    testImplementation(group = "org.assertj", name = "assertj-core", version = Version.ASSERT_J)
+        version = Lib.JUNIT)
+    testImplementation(group = "io.mockk", name = "mockk", version = Lib.MOCK_K)
+    testImplementation(group = "org.assertj", name = "assertj-core", version = Lib.ASSERT_J)
 }

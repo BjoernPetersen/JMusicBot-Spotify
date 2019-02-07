@@ -8,7 +8,7 @@ import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.Song
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
-import net.bjoernpetersen.musicbot.spi.plugin.IdBase
+import net.bjoernpetersen.musicbot.api.plugin.IdBase
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
@@ -16,7 +16,8 @@ import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
 import net.bjoernpetersen.spotify.nullConfigChecker
 import net.bjoernpetersen.spotify.provider.SpotifyProviderBase
 import java.io.IOException
-import java.util.*
+import java.util.Collections
+import java.util.LinkedList
 import javax.inject.Inject
 
 @IdBase

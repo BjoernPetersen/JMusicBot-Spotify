@@ -85,13 +85,14 @@ class SpotifyProvider : SpotifyProviderBase {
             albumArtUrl = albumArtUrl)
     }
 
-    override fun search(query: String): List<Song> {
+    override fun search(query: String, offset: Int): List<Song> {
         if (query.isEmpty()) {
             return emptyList()
         }
         return try {
             api!!.searchTracks(query)
                 .limit(40)
+                .offset(offset)
                 .market(market.get())
                 .build().execute().items
                 .map { this.songFromTrack(it) }

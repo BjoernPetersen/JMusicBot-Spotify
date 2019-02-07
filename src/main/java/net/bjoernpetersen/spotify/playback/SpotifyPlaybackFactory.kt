@@ -7,7 +7,7 @@ import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
-import net.bjoernpetersen.musicbot.spi.plugin.Base
+import net.bjoernpetersen.musicbot.api.plugin.Base
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackFactory
