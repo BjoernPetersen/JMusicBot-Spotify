@@ -6,12 +6,13 @@ import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.specification.Track
 import mu.KotlinLogging
-import net.bjoernpetersen.musicbot.api.Song
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.loader.NoResource
+import net.bjoernpetersen.musicbot.api.player.Song
+import net.bjoernpetersen.musicbot.spi.loader.Resource
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
-import net.bjoernpetersen.musicbot.spi.plugin.PlaybackSupplier
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.CountryCodeSerializer
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
@@ -63,13 +64,11 @@ class SpotifyProvider : SpotifyProviderBase {
             .build()
     }
 
-    override fun getPlaybackSupplier(song: Song): PlaybackSupplier = object : PlaybackSupplier {
-        override fun supply(song: Song): Playback {
-            return spotifyPlaybackFactory.getPlayback(song.id)
-        }
+    override fun supplyPlayback(song: Song, resource: Resource): Playback {
+        return spotifyPlaybackFactory.getPlayback(song.id)
     }
 
-    override fun loadSong(song: Song): Boolean = true
+    override fun loadSong(song: Song): Resource = NoResource
 
     override fun close() {
     }
