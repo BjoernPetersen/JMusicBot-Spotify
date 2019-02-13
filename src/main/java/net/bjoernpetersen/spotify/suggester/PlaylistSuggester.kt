@@ -7,20 +7,20 @@ import com.wrapper.spotify.model_objects.specification.PlaylistTrack
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
+import net.bjoernpetersen.musicbot.api.config.NonnullConfigChecker
 import net.bjoernpetersen.musicbot.api.player.Song
 import net.bjoernpetersen.musicbot.api.plugin.IdBase
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
-import net.bjoernpetersen.spotify.nullConfigChecker
-import net.bjoernpetersen.spotify.provider.SpotifyProviderBase
+import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
+import net.bjoernpetersen.spotify.provider.SpotifyProvider
 import java.io.IOException
 import java.util.Collections
 import java.util.LinkedList
 import javax.inject.Inject
 
-@IdBase
+@IdBase("Spotify playlist")
 class PlaylistSuggester : Suggester {
 
     private val logger = KotlinLogging.logger {}
@@ -30,9 +30,9 @@ class PlaylistSuggester : Suggester {
     private lateinit var shuffle: Config.BooleanEntry
 
     @Inject
-    private lateinit var auth: SpotifyAuthenticatorBase
+    private lateinit var auth: SpotifyAuthenticator
     @Inject
-    private lateinit var provider: SpotifyProviderBase
+    private lateinit var provider: SpotifyProvider
 
     private var api: SpotifyApi? = null
     private lateinit var playlist: List<Song>
@@ -105,7 +105,7 @@ class PlaylistSuggester : Suggester {
             "playlist",
             "One of your public playlists to play",
             PlaylistChoice.Serializer,
-            nullConfigChecker(),
+            NonnullConfigChecker,
             ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true))
         return listOf(shuffle, playlistId)
     }
@@ -114,7 +114,7 @@ class PlaylistSuggester : Suggester {
         userId = secrets.StringEntry(
             "userId",
             "",
-            nullConfigChecker(),
+            NonnullConfigChecker,
             null)
         return emptyList()
     }

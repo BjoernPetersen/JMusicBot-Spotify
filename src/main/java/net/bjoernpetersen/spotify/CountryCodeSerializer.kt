@@ -12,5 +12,4 @@ internal object CountryCodeSerializer : ConfigSerializer<CountryCode> {
     override fun serialize(obj: CountryCode): String {
         return obj.alpha2
     }
-
 }

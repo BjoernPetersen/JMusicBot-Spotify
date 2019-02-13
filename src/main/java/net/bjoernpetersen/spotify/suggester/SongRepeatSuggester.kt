@@ -9,21 +9,22 @@ import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import net.bjoernpetersen.spotify.provider.SpotifyProviderBase
+import net.bjoernpetersen.spotify.provider.SpotifyProvider
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject
 
-@IdBase
+@IdBase("Spotify song repeater")
 class SongRepeatSuggester : Suggester {
 
     @Inject
-    private lateinit var provider: SpotifyProviderBase
+    private lateinit var provider: SpotifyProvider
     private lateinit var songUrl: Config.StringEntry
     private lateinit var song: Song
 
     override val name: String = "Spotify repeater"
-    override val description: String = "TODO"
+    override val description: String = "Plays one song over and over again on repeat." +
+        " Recommended song: Kenning West."
 
     override val subject: String
         get() = song.title

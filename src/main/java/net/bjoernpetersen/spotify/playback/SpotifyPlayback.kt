@@ -8,12 +8,12 @@ import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.spi.plugin.AbstractPlayback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackState
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackStateListener
-import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
+import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 internal class SpotifyPlayback(
-    private val authenticator: SpotifyAuthenticatorBase,
+    private val authenticator: SpotifyAuthenticator,
     private val deviceId: String,
     private val songId: String) : AbstractPlayback() {
 

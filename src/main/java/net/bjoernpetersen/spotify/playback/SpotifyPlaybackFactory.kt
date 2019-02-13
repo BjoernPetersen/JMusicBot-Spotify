@@ -7,13 +7,13 @@ import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import net.bjoernpetersen.musicbot.api.config.NonnullConfigChecker
 import net.bjoernpetersen.musicbot.api.plugin.Base
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackFactory
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import net.bjoernpetersen.spotify.auth.SpotifyAuthenticatorBase
-import net.bjoernpetersen.spotify.nullConfigChecker
+import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import javax.inject.Inject
 
 @Base
@@ -24,7 +24,7 @@ class SpotifyPlaybackFactory : PlaybackFactory {
     private val logger = KotlinLogging.logger { }
 
     @Inject
-    private lateinit var authenticator: SpotifyAuthenticatorBase
+    private lateinit var authenticator: SpotifyAuthenticator
     private lateinit var device: Config.SerializedEntry<SimpleDevice>
 
     private fun findDevices(): List<SimpleDevice>? {
@@ -43,14 +43,15 @@ class SpotifyPlaybackFactory : PlaybackFactory {
     }
 
     override val name: String = "Spotify"
-    override val description: String = "TODO"
+    override val description: String = "Plays Spotify songs with an official Spotify client on " +
+        "a possibly remote device. Requires a Spotify Premium subscription."
 
     override fun createConfigEntries(config: Config): List<Config.Entry<*>> {
         device = config.SerializedEntry(
             "deviceId",
             "Spotify device to use",
             DeviceSerializer,
-            nullConfigChecker(),
+            NonnullConfigChecker,
             ChoiceBox(SimpleDevice::name, { findDevices() }, true)
         )
         return listOf(device)

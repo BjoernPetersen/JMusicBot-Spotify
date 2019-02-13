@@ -50,7 +50,6 @@ internal class LocalServerReceiver(port: Int, private val state: String) {
         } catch (e: Exception) {
             logger.error(e) { "Could not close server" }
         }
-
     }
 
     @Throws(InterruptedException::class)

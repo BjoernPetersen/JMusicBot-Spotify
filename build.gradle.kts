@@ -48,11 +48,6 @@ tasks {
     }
 }
 
-configurations.all {
-    // TODO remove or comment out when MusicBot refactor is released
-    resolutionStrategy.cacheChangingModulesFor(1, TimeUnit.MINUTES)
-}
-
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(
@@ -62,9 +57,7 @@ dependencies {
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
-        version = Lib.MUSICBOT) {
-        isChanging = true
-    }
+        version = Lib.MUSICBOT)
 
     implementation(
         group = "se.michaelthelin.spotify",
@@ -95,12 +88,11 @@ dependencies {
         name = "converter-jackson",
         version = Lib.RETROFIT)
 
-
     testImplementation(
         group = "org.junit.jupiter",
         name = "junit-jupiter-api",
         version = Lib.JUNIT)
-    testImplementation(
+    testRuntime(
         group = "org.junit.jupiter",
         name = "junit-jupiter-engine",
         version = Lib.JUNIT)
