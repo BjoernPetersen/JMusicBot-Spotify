@@ -9,8 +9,7 @@ object Lib {
     const val RETROFIT = "2.5.0"
     const val RETROFIT_JACKSON = "2.5.0"
 
-    const val JUNIT = "5.3.1"
-    const val JUNIT_PLATFORM = "1.3.1"
-    const val MOCK_K = "1.9"
+    const val JUNIT = "5.4.0"
+    const val MOCK_K = "1.9.1"
     const val ASSERT_J = "3.11.1"
 }
