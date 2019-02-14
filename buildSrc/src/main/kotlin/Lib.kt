@@ -2,7 +2,7 @@ object Lib {
     const val KOTLIN = Plugin.KOTLIN
     const val KOTLIN_LOGGING = "1.6.23"
 
-    const val MUSICBOT = "0.16.0-SNAPSHOT"
+    const val MUSICBOT = "0.16.0"
 
     const val SPOTIFY = "2.1.2"
     const val OAUTHCLIENT = "1.28.0"
