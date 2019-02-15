@@ -1,28 +1,40 @@
-version: 2
+version: 2.1
+
+executors:
+  jdk:
+    docker:
+      - image: openjdk:8-jdk
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+commands:
+  with_cache:
+    parameters:
+      steps:
+        type: steps
+    steps:
+      - restore_cache:
+          keys:
+            - v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}-{{ checksum "buildSrc/src/main/kotlin/Lib.kt" }}
+            - v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}
+            - v3-{{ checksum "build.gradle.kts" }}
+            - v3-
+      - steps: << parameters.steps >>
+
 jobs:
   build:
-    docker:
-    - image: circleci/openjdk:8-jdk
-    working_directory: ~/app
+    executor: jdk
     steps:
-    - checkout
-    - run: chmod +x gradlew
+      - checkout
+      - with_cache:
+          steps:
+            - run: ./gradlew dependencies
 
-      # Download and cache dependencies
-    - restore_cache:
-        keys:
-        - v2-dependencies-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Version.kt" }}
-        - v2-dependencies-{{ checksum "build.gradle.kts" }}
-        # fallback to using the latest cache if no exact match is found
-        - v2-dependencies-
+            - save_cache:
+                paths:
+                  - ~/.gradle
+                key: v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}-{{ checksum "buildSrc/src/main/kotlin/Lib.kt" }}
 
-    - run: ./gradlew dependencies
-
-    - save_cache:
-        paths:
-        - ~/.gradle
-        key: v2-dependencies-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Version.kt" }}
-
-    - run: ./gradlew test
-    - store_test_results:
-        path: build/test-results
+            - run: ./gradlew test
+            - store_test_results:
+                path: build/test-results
