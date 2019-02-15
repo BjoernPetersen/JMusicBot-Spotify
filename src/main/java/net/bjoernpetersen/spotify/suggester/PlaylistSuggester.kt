@@ -33,6 +33,7 @@ class PlaylistSuggester : Suggester {
     private lateinit var provider: SpotifyProvider
 
     private var api: SpotifyApi? = null
+    private var playlist: PlaylistChoice? = null
     private lateinit var playlistSongs: List<Song>
 
     private var nextIndex: Int = 0
@@ -40,7 +41,7 @@ class PlaylistSuggester : Suggester {
 
     override val name: String = "Spotify playlist"
     override val description: String = "Plays songs from one of your public Spotify playlists"
-    override var subject: String = playlistId.get()?.displayName ?: name
+    override var subject: String = playlist?.displayName ?: name
         private set
 
     private fun findPlaylists(): List<PlaylistChoice>? {
@@ -125,7 +126,8 @@ class PlaylistSuggester : Suggester {
             userId.set(loadUserId())
         }
 
-        playlistSongs = playlistId.get()?.id?.let {
+        playlist = playlistId.get()
+        playlistSongs = playlist?.id?.let {
             loadPlaylist(it)
         } ?: throw InitializationException("No playlist selected")
 
