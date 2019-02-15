@@ -6,7 +6,6 @@ object Lib {
 
     const val SPOTIFY = "2.1.2"
     const val OAUTHCLIENT = "1.28.0"
-    const val RETROFIT = "2.5.0"
 
     const val JUNIT = "5.4.0"
     const val MOCK_K = "1.9.1"
