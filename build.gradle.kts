@@ -48,15 +48,22 @@ tasks {
     }
 }
 
+configurations {
+    "runtime" {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+        exclude("com.google.guava")
+        exclude("com.google.inject")
+    }
+}
+
 dependencies {
     implementation(
         group = "io.github.microutils",
         name = "kotlin-logging",
-        version = Lib.KOTLIN_LOGGING) {
-        exclude("org.slf4j")
-        exclude("org.jetbrains")
-        exclude("org.jetbrains.kotlin")
-    }
+        version = Lib.KOTLIN_LOGGING)
+
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
@@ -69,27 +76,19 @@ dependencies {
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client",
-        version = Lib.OAUTHCLIENT) {
-        exclude("com.google.guava")
-    }
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client-jetty",
-        version = Lib.OAUTHCLIENT) {
-        exclude("com.google.guava")
-    }
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.google.http-client",
         name = "google-http-client",
-        version = Lib.OAUTHCLIENT) {
-        exclude("com.google.guava")
-    }
+        version = Lib.OAUTHCLIENT)
     implementation(
         group = "com.google.http-client",
         name = "google-http-client-jackson2",
-        version = Lib.OAUTHCLIENT) {
-        exclude("com.google.guava")
-    }
+        version = Lib.OAUTHCLIENT)
 
     testImplementation(
         group = "org.junit.jupiter",
