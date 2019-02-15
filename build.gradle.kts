@@ -49,11 +49,14 @@ tasks {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
     implementation(
         group = "io.github.microutils",
         name = "kotlin-logging",
-        version = Lib.KOTLIN_LOGGING)
+        version = Lib.KOTLIN_LOGGING) {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+    }
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
@@ -66,27 +69,27 @@ dependencies {
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT) {
+        exclude("com.google.guava")
+    }
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client-jetty",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT) {
+        exclude("com.google.guava")
+    }
     implementation(
         group = "com.google.http-client",
         name = "google-http-client",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT) {
+        exclude("com.google.guava")
+    }
     implementation(
         group = "com.google.http-client",
         name = "google-http-client-jackson2",
-        version = Lib.OAUTHCLIENT)
-    implementation(
-        group = "com.squareup.retrofit2",
-        name = "retrofit",
-        version = Lib.RETROFIT)
-    implementation(
-        group = "com.squareup.retrofit2",
-        name = "converter-jackson",
-        version = Lib.RETROFIT)
+        version = Lib.OAUTHCLIENT) {
+        exclude("com.google.guava")
+    }
 
     testImplementation(
         group = "org.junit.jupiter",
