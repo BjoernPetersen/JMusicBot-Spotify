@@ -2,8 +2,6 @@ package net.bjoernpetersen.spotify.suggester
 
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
-import com.wrapper.spotify.model_objects.specification.Paging
-import com.wrapper.spotify.model_objects.specification.PlaylistTrack
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -35,14 +33,14 @@ class PlaylistSuggester : Suggester {
     private lateinit var provider: SpotifyProvider
 
     private var api: SpotifyApi? = null
-    private lateinit var playlist: List<Song>
+    private lateinit var playlistSongs: List<Song>
 
     private var nextIndex: Int = 0
     private var nextSongs: LinkedList<Song> = LinkedList()
 
     override val name: String = "Spotify playlist"
-    override val description: String = "TODO"
-    override var subject: String = name
+    override val description: String = "Plays songs from one of your public Spotify playlists"
+    override var subject: String = playlistId.get()?.displayName ?: name
         private set
 
     private fun findPlaylists(): List<PlaylistChoice>? {
@@ -82,8 +80,8 @@ class PlaylistSuggester : Suggester {
         val startIndex = nextIndex
         while (nextSongs.size < Math.max(Math.min(50, maxLength), 1)) {
             // load more suggestions
-            nextSongs.add(playlist[nextIndex])
-            nextIndex = (nextIndex + 1) % playlist.size
+            nextSongs.add(playlistSongs[nextIndex])
+            nextIndex = (nextIndex + 1) % playlistSongs.size
             if (nextIndex == startIndex) {
                 // the playlist is shorter than maxLength
                 break
@@ -127,9 +125,10 @@ class PlaylistSuggester : Suggester {
             userId.set(loadUserId())
         }
 
-        playlist = playlistId.get()?.id?.let {
+        playlistSongs = playlistId.get()?.id?.let {
             loadPlaylist(it)
         } ?: throw InitializationException("No playlist selected")
+
         nextSongs = LinkedList()
     }
 
@@ -157,9 +156,8 @@ class PlaylistSuggester : Suggester {
 
     @Throws(InitializationException::class)
     private fun loadPlaylist(playlistId: String): List<Song> {
-        val playlist: Paging<PlaylistTrack>
-        try {
-            playlist = getApi()
+        val playlistTracks = try {
+            getApi()
                 .getPlaylistsTracks(playlistId)
                 .build().execute()
         } catch (e: IOException) {
@@ -168,7 +166,7 @@ class PlaylistSuggester : Suggester {
             throw InitializationException("Could not load playlist", e)
         }
 
-        val tracks = playlist.items
+        val tracks = playlistTracks.items
         val ids = tracks
             .map { t -> t.track.id }
             .let { if (shuffle.get()) it.shuffled() else it }
