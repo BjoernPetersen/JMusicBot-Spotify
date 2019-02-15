@@ -22,7 +22,7 @@ commands:
       - steps: << parameters.steps >>
 
 jobs:
-  build:
+  test:
     executor: jdk
     steps:
       - checkout
@@ -38,3 +38,8 @@ jobs:
             - run: ./gradlew test
             - store_test_results:
                 path: build/test-results
+
+workflows:
+  full_workflow:
+    jobs:
+      - test
