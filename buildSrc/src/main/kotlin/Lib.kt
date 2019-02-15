@@ -1,6 +1,6 @@
 object Lib {
     const val KOTLIN = Plugin.KOTLIN
-    const val KOTLIN_LOGGING = "1.6.23"
+    const val KOTLIN_LOGGING = "1.6.24"
 
     const val MUSICBOT = "0.17.4"
 
