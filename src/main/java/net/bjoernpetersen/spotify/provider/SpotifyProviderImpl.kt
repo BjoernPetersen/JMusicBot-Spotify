@@ -5,6 +5,7 @@ import com.neovisionaries.i18n.CountryCode
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.specification.Track
+import com.wrapper.spotify.model_objects.specification.TrackSimplified
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -94,7 +95,7 @@ class SpotifyProviderImpl : SpotifyProvider {
                 .offset(offset)
                 .market(market.get())
                 .build().execute().items
-                .map { this.songFromTrack(it) }
+                .map { this.trackToSong(it) }
         } catch (e: IOException) {
             logger.error(e) { "Error searching for spotify songs (query: $query)" }
             emptyList()
@@ -103,7 +104,17 @@ class SpotifyProviderImpl : SpotifyProvider {
         }
     }
 
-    private fun songFromTrack(track: Track): Song {
+    override fun trackToSong(track: TrackSimplified): Song {
+        val id = track.id
+        val title = track.name
+        val description = track.artists.asSequence()
+            .map { it.name }
+            .joinToString()
+        val durationMs = track.durationMs
+        return createSong(id, title, description, durationMs, null)
+    }
+
+    override fun trackToSong(track: Track): Song {
         val id = track.id
         val title = track.name
         val description = track.artists.asSequence()
@@ -118,7 +129,7 @@ class SpotifyProviderImpl : SpotifyProvider {
     @Throws(NoSuchSongException::class)
     override fun lookup(id: String): Song {
         try {
-            return songFromTrack(api!!.getTrack(id).build().execute())
+            return trackToSong(api!!.getTrack(id).build().execute())
         } catch (e: IOException) {
             throw NoSuchSongException("Error looking up song: $id", SpotifyProviderImpl::class, e)
         } catch (e: SpotifyWebApiException) {
@@ -131,7 +142,7 @@ class SpotifyProviderImpl : SpotifyProvider {
         for (subIds in Lists.partition(ids, 50)) {
             try {
                 api!!.getSeveralTracks(*subIds.toTypedArray()).build().execute()
-                    .map { this.songFromTrack(it) }
+                    .map { this.trackToSong(it) }
                     .forEach { result.add(it) }
             } catch (e: IOException) {
                 logger.info(e) { "Could not look up some ID." }

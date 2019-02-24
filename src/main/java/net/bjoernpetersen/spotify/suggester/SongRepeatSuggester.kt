@@ -10,8 +10,6 @@ import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.provider.SpotifyProvider
-import java.net.MalformedURLException
-import java.net.URL
 import javax.inject.Inject
 
 @IdBase("Spotify song repeater")
@@ -40,19 +38,6 @@ class SongRepeatSuggester : Suggester {
     override fun notifyPlayed(songEntry: SongEntry) {}
 
     override fun dislike(song: Song) {}
-
-    private fun getSongId(url: String): String? {
-        return try {
-            val parsed = URL(url)
-            val pathParts = parsed.path.split("/".toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray()
-            if (pathParts.size != 3) {
-                null
-            } else pathParts[2]
-        } catch (e: MalformedURLException) {
-            null
-        }
-    }
 
     @Throws(InitializationException::class)
     override fun initialize(initStateWriter: InitStateWriter) {
