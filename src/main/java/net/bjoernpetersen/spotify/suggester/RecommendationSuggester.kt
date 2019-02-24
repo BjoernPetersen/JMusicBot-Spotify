@@ -78,6 +78,7 @@ class RecommendationSuggester : Suggester {
             throw InitializationException(e)
         }
 
+        initStateWriter.state("Filling suggestions")
         fillNextSongs(baseSong)
     }
 
