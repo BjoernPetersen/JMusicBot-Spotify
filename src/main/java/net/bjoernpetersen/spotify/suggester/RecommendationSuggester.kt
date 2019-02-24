@@ -1,13 +1,18 @@
 package net.bjoernpetersen.spotify.suggester
 
 import com.wrapper.spotify.SpotifyApi
+import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
+import net.bjoernpetersen.musicbot.api.config.IntSerializer
+import net.bjoernpetersen.musicbot.api.config.NonnullConfigChecker
+import net.bjoernpetersen.musicbot.api.config.NumberBox
 import net.bjoernpetersen.musicbot.api.config.SerializationException
 import net.bjoernpetersen.musicbot.api.config.TextBox
 import net.bjoernpetersen.musicbot.api.player.Song
 import net.bjoernpetersen.musicbot.api.player.SongEntry
 import net.bjoernpetersen.musicbot.api.plugin.IdBase
+import net.bjoernpetersen.musicbot.spi.plugin.BrokenSuggesterException
 import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
@@ -21,6 +26,8 @@ import kotlin.math.min
 @IdBase("Spotify recommendation suggester")
 class RecommendationSuggester : Suggester {
 
+    private val logger = KotlinLogging.logger { }
+
     override val name: String = "Spotify recommendation suggester"
     override val description: String =
         "Suggests Spotify songs based on the last played manually enqueued song"
@@ -32,6 +39,14 @@ class RecommendationSuggester : Suggester {
 
     private lateinit var fallbackEntry: Config.StringEntry
     private lateinit var baseEntry: Config.SerializedEntry<SimpleSong>
+
+    // various station tuning attributes
+    private lateinit var targetDanceability: Config.SerializedEntry<Int>
+    private lateinit var targetEnergy: Config.SerializedEntry<Int>
+    private lateinit var minInstrumentalness: Config.SerializedEntry<Int>
+    private lateinit var maxInstrumentalness: Config.SerializedEntry<Int>
+    private lateinit var minLiveness: Config.SerializedEntry<Int>
+    private lateinit var maxLiveness: Config.SerializedEntry<Int>
 
     private val baseId: String
         get() = baseEntry.get()?.id
@@ -55,7 +70,74 @@ class RecommendationSuggester : Suggester {
             uiNode = TextBox,
             default = "https://open.spotify.com/track/75n8FqbBeBLW2jUzvjdjXV?si=3LjPfzQdTcmnMn05gf7UNQ")
 
-        return listOf(fallbackEntry)
+        targetDanceability = config.SerializedEntry(
+            key = "targetDanceability",
+            description = "Danceability describes how suitable a track is for dancing based on" +
+                " a combination of musical elements including tempo, rhythm stability," +
+                " beat strength, and overall regularity.",
+            serializer = IntSerializer,
+            configChecker = NonnullConfigChecker,
+            uiNode = NumberBox(min = -1),
+            default = -1)
+        targetEnergy = config.SerializedEntry(
+            key = "targetEnergy",
+            description = "Energy represents a perceptual measure of intensity and activity." +
+                " Typically, energetic tracks feel fast, loud, and noisy. For example," +
+                " death metal has high energy, while a Bach prelude scores low on the scale." +
+                " Perceptual features contributing to this attribute include dynamic range," +
+                " perceived loudness, timbre, onset rate, and general entropy.",
+            serializer = IntSerializer,
+            configChecker = NonnullConfigChecker,
+            uiNode = NumberBox(min = -1),
+            default = -1)
+        minInstrumentalness = config.SerializedEntry(
+            key = "minInstrumentalness",
+            description = "Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are" +
+                " treated as instrumental in this context. Rap or spoken word tracks are clearly" +
+                " “vocal”. The closer the instrumentalness value is to 100, the greater likelihood" +
+                " the track contains no vocal content. Values above 50 are intended to represent" +
+                " instrumental tracks, but confidence is higher as the value approaches 100.",
+            serializer = IntSerializer,
+            configChecker = NonnullConfigChecker,
+            uiNode = NumberBox(),
+            default = 0)
+        maxInstrumentalness = config.SerializedEntry(
+            key = "maxInstrumentalness",
+            description = "Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are" +
+                " treated as instrumental in this context. Rap or spoken word tracks are clearly" +
+                " “vocal”. The closer the instrumentalness value is to 100, the greater likelihood" +
+                " the track contains no vocal content. Values above 50 are intended to represent" +
+                " instrumental tracks, but confidence is higher as the value approaches 100.",
+            serializer = IntSerializer,
+            configChecker = NonnullConfigChecker,
+            uiNode = NumberBox(),
+            default = 100)
+        minLiveness = config.SerializedEntry(
+            key = "minLiveness",
+            description = "Detects the presence of an audience in the recording." +
+                " Higher liveness values represent an increased probability that" +
+                " the track was performed live. A value above 80 provides strong" +
+                " likelihood that the track is live.",
+            serializer = IntSerializer,
+            configChecker = NonnullConfigChecker,
+            uiNode = NumberBox(),
+            default = 0)
+        maxLiveness = config.SerializedEntry(
+            key = "maxLiveness",
+            description = "Danceability describes how suitable a track is for dancing based on" +
+                " a combination of musical elements including tempo, rhythm stability," +
+                " beat strength, and overall regularity.",
+            serializer = IntSerializer,
+            configChecker = NonnullConfigChecker,
+            uiNode = NumberBox(),
+            default = 100)
+
+        return listOf(
+            fallbackEntry,
+            targetDanceability,
+            targetEnergy,
+            minInstrumentalness, maxInstrumentalness,
+            minLiveness, maxLiveness)
     }
 
     override fun createStateEntries(state: Config) {
@@ -80,9 +162,20 @@ class RecommendationSuggester : Suggester {
 
         initStateWriter.state("Filling suggestions")
         fillNextSongs(baseSong)
+
+        if (nextSongs.isEmpty()) {
+            throw InitializationException("Could not get any recommendations")
+        }
     }
 
     private val nextSongs: MutableList<Song> = LinkedList()
+
+    private fun Int.toPercentFloat(): Float = toFloat() / 100
+    private fun Config.SerializedEntry<Int>.setIfPresent(set: (Float) -> Unit) {
+        val value = get()!!
+        if (value == default) return
+        set(value.toPercentFloat())
+    }
 
     private fun fillNextSongs(base: Song) {
         val api = SpotifyApi.builder()
@@ -93,9 +186,20 @@ class RecommendationSuggester : Suggester {
         api.recommendations
             .market(provider.market.get())
             .seed_tracks(base.id)
+            .apply {
+                targetDanceability.setIfPresent { target_danceability(it) }
+                targetEnergy.setIfPresent { target_energy(it) }
+
+                minInstrumentalness.setIfPresent { min_instrumentalness(it) }
+                maxInstrumentalness.setIfPresent { max_instrumentalness(it) }
+
+                minLiveness.setIfPresent { min_liveness(it) }
+                maxLiveness.setIfPresent { max_liveness(it) }
+            }
             .build()
             .execute()
             .tracks
+            // TODO these are simplified and missing the album art
             .map { provider.trackToSong(it) }
             .forEach { nextSongs.add(it) }
     }
@@ -103,6 +207,9 @@ class RecommendationSuggester : Suggester {
     override fun getNextSuggestions(maxLength: Int): List<Song> {
         if (nextSongs.size <= 1) {
             fillNextSongs(baseSong)
+            if (nextSongs.isEmpty()) {
+                throw BrokenSuggesterException()
+            }
         }
 
         return nextSongs.toList().let { it.subList(0, min(maxLength, it.size)) }
