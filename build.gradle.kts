@@ -97,6 +97,7 @@ dependencies {
         version = Lib.OAUTHCLIENT
     )
 
+    testImplementation(kotlin("stdlib-jdk8"))
     testImplementation(
         group = "org.junit.jupiter",
         name = "junit-jupiter-api",
