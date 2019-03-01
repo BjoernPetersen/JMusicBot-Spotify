@@ -62,40 +62,49 @@ dependencies {
     implementation(
         group = "io.github.microutils",
         name = "kotlin-logging",
-        version = Lib.KOTLIN_LOGGING)
+        version = Lib.KOTLIN_LOGGING
+    )
 
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
-        version = Lib.MUSICBOT)
+        version = Lib.MUSICBOT
+    )
 
     implementation(
         group = "se.michaelthelin.spotify",
         name = "spotify-web-api-java",
-        version = Lib.SPOTIFY)
+        version = Lib.SPOTIFY
+    )
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT
+    )
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client-jetty",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT
+    )
     implementation(
         group = "com.google.http-client",
         name = "google-http-client",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT
+    )
     implementation(
         group = "com.google.http-client",
         name = "google-http-client-jackson2",
-        version = Lib.OAUTHCLIENT)
+        version = Lib.OAUTHCLIENT
+    )
 
     testImplementation(
         group = "org.junit.jupiter",
         name = "junit-jupiter-api",
-        version = Lib.JUNIT)
+        version = Lib.JUNIT
+    )
     testRuntime(
         group = "org.junit.jupiter",
         name = "junit-jupiter-engine",
-        version = Lib.JUNIT)
+        version = Lib.JUNIT
+    )
 }
