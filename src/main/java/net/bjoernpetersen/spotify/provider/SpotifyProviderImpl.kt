@@ -22,6 +22,7 @@ import net.bjoernpetersen.spotify.CountryCodeSerializer
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import net.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -62,7 +63,7 @@ class SpotifyProviderImpl : SpotifyProvider {
                 { CountryCode.values().sortedBy { it.getName() } },
                 lazy = true
             ),
-            CountryCode.DE
+            default = CountryCode.getByLocale(Locale.getDefault()) ?: CountryCode.UNDEFINED
         )
         return listOf<Config.Entry<*>>(market)
     }
