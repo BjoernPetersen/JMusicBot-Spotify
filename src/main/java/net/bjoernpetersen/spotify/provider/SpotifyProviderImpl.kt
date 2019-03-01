@@ -52,7 +52,8 @@ class SpotifyProviderImpl : SpotifyProvider {
             { if (it == CountryCode.UNDEFINED) "Required" else null },
             ChoiceBox(
                 CountryCode::getName,
-                { CountryCode.values().sortedBy { it.getName() } }
+                { CountryCode.values().sortedBy { it.getName() } },
+                lazy = true
             ),
             CountryCode.DE
         )
