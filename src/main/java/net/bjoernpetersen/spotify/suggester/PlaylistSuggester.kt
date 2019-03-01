@@ -99,13 +99,15 @@ class PlaylistSuggester : Suggester {
         shuffle = config.BooleanEntry(
             "shuffle",
             "Whether the playlist should be shuffled",
-            true)
+            true
+        )
         playlistId = config.SerializedEntry(
             "playlist",
             "One of your public playlists to play",
             PlaylistChoice.Serializer,
             NonnullConfigChecker,
-            ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true))
+            ChoiceBox(PlaylistChoice::displayName, { findPlaylists() }, true)
+        )
         return listOf(shuffle, playlistId)
     }
 
@@ -114,21 +116,25 @@ class PlaylistSuggester : Suggester {
             "userId",
             "",
             NonnullConfigChecker,
-            null)
+            null
+        )
         return emptyList()
     }
 
-    override fun createStateEntries(state: Config) {
-    }
+    override fun createStateEntries(state: Config) {}
 
     override fun initialize(initStateWriter: InitStateWriter) {
+        initStateWriter.state("Loading user ID")
         if (userId.get() == null) {
             userId.set(loadUserId())
         }
 
+        initStateWriter.state("Loading playlist songs")
         playlist = playlistId.get()
-        playlistSongs = playlist?.id?.let {
-            loadPlaylist(it)
+        playlistSongs = playlist?.id?.let { playlistId ->
+            loadPlaylist(playlistId)
+                .let { if (shuffle.get()) it.shuffled() else it }
+                .also { logger.info { "Loaded ${it.size} songs" } }
         } ?: throw InitializationException("No playlist selected")
 
         nextSongs = LinkedList()
@@ -157,10 +163,12 @@ class PlaylistSuggester : Suggester {
     }
 
     @Throws(InitializationException::class)
-    private fun loadPlaylist(playlistId: String): List<Song> {
+    private fun loadPlaylist(playlistId: String, offset: Int = 0): List<Song> {
         val playlistTracks = try {
             getApi()
                 .getPlaylistsTracks(playlistId)
+                .market(provider.market.get()!!)
+                .offset(offset)
                 .build().execute()
         } catch (e: IOException) {
             throw InitializationException("Could not load playlist", e)
@@ -168,13 +176,17 @@ class PlaylistSuggester : Suggester {
             throw InitializationException("Could not load playlist", e)
         }
 
-        val tracks = playlistTracks.items
-        val ids = tracks
-            .map { t -> t.track.id }
-            .let { if (shuffle.get()) it.shuffled() else it }
+        val ids = playlistTracks.items
+            .asSequence()
+            .map { it.track }
+            .filter { it.isPlayable }
+            .map { it.id }
+            .toList()
 
-        // TODO add the full list instead of just the first page (100 tracks). API wrapper limitation.
-        return provider.lookupBatch(ids)
+        val result = provider.lookupBatch(ids)
+
+        return if (playlistTracks.next == null) result
+        else result + loadPlaylist(playlistId, offset + playlistTracks.items.size)
     }
 
     @Throws(IOException::class)
