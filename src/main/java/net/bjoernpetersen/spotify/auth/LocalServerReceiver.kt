@@ -79,9 +79,11 @@ internal class LocalServerReceiver(port: Int, private val state: String) {
     private inner class Callback : AbstractHandler() {
 
         @Throws(IOException::class)
-        override fun handle(target: String, request: HttpServletRequest,
+        override fun handle(
+            target: String, request: HttpServletRequest,
             response: HttpServletResponse,
-            dispatch: Int) {
+            dispatch: Int
+        ) {
             logger.debug("Handle...")
             if (CALLBACK_PATH != target) {
                 logger.warn { "Wrong path: $target" }

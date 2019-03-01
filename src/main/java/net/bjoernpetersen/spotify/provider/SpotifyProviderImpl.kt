@@ -50,7 +50,10 @@ class SpotifyProviderImpl : SpotifyProvider {
             "Country code of your Spotify account",
             CountryCodeSerializer,
             { if (it == CountryCode.UNDEFINED) "Required" else null },
-            ChoiceBox(CountryCode::getName, { CountryCode.values().sortedBy { it.getName() } }),
+            ChoiceBox(
+                CountryCode::getName,
+                { CountryCode.values().sortedBy { it.getName() } }
+            ),
             CountryCode.DE
         )
         return listOf<Config.Entry<*>>(market)
@@ -74,15 +77,18 @@ class SpotifyProviderImpl : SpotifyProvider {
     override fun close() {
     }
 
-    private fun createSong(id: String, title: String, description: String, durationMs: Int,
-        albumArtUrl: String?): Song {
+    private fun createSong(
+        id: String, title: String, description: String, durationMs: Int,
+        albumArtUrl: String?
+    ): Song {
         return Song(
             id = id,
             provider = this,
             title = title,
             description = description,
             duration = durationMs / 1000,
-            albumArtUrl = albumArtUrl)
+            albumArtUrl = albumArtUrl
+        )
     }
 
     override fun search(query: String, offset: Int): List<Song> {

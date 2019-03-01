@@ -76,11 +76,18 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
 
     private fun getSpotifyUrl(state: String, redirectUrl: URL): URL {
         try {
-            return URL(BrowserClientRequestUrl(SPOTIFY_URL, clientId.get()!!)
-                .setState(state)
-                .setScopes(Arrays.asList("user-modify-playback-state", "user-read-playback-state"))
-                .setRedirectUri(redirectUrl.toExternalForm())
-                .build())
+            return URL(
+                BrowserClientRequestUrl(SPOTIFY_URL, clientId.get()!!)
+                    .setState(state)
+                    .setScopes(
+                        Arrays.asList(
+                            "user-modify-playback-state",
+                            "user-read-playback-state"
+                        )
+                    )
+                    .setRedirectUri(redirectUrl.toExternalForm())
+                    .build()
+            )
         } catch (e: MalformedURLException) {
             throw IllegalArgumentException(e)
         }
@@ -135,7 +142,8 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
             IntSerializer,
             NonnullConfigChecker,
             NumberBox(1024, 65535),
-            58642).also { port = it })
+            58642
+        ).also { port = it })
 
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> {
         tokenExpiration = secrets.SerializedEntry(
@@ -157,14 +165,16 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
             "accessToken",
             "OAuth access token",
             { null },
-            null)
+            null
+        )
 
         clientId = secrets.StringEntry(
             key = "clientId",
             description = "OAuth client ID. Only required if there is a custom port.",
             configChecker = { null },
             uiNode = PasswordBox,
-            default = CLIENT_ID)
+            default = CLIENT_ID
+        )
 
         return listOf(tokenExpiration, clientId)
     }
