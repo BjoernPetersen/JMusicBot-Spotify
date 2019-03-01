@@ -1,5 +1,8 @@
 package net.bjoernpetersen.spotify.provider
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import com.google.common.collect.Lists
 import com.neovisionaries.i18n.CountryCode
 import com.wrapper.spotify.SpotifyApi
@@ -19,6 +22,8 @@ import net.bjoernpetersen.spotify.CountryCodeSerializer
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import net.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import java.io.IOException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class SpotifyProviderImpl : SpotifyProvider {
@@ -44,6 +49,8 @@ class SpotifyProviderImpl : SpotifyProvider {
     override val description: String = "Provides songs from Spotify"
     override val subject: String = "Spotify"
 
+    private lateinit var songCache: LoadingCache<String, Song>
+
     override fun createConfigEntries(config: Config): List<Config.Entry<*>> {
         market = config.SerializedEntry(
             "market",
@@ -67,6 +74,14 @@ class SpotifyProviderImpl : SpotifyProvider {
         api = SpotifyApi.builder()
             .setAccessToken(authenticator.token)
             .build()
+
+        songCache = CacheBuilder.newBuilder()
+            .initialCapacity(512)
+            .maximumSize(2048)
+            .expireAfterAccess(1, TimeUnit.HOURS)
+            .build(object : CacheLoader<String, Song>() {
+                override fun load(key: String): Song = actualLookup(key)
+            })
     }
 
     override fun supplyPlayback(song: Song, resource: Resource): Playback {
@@ -102,7 +117,10 @@ class SpotifyProviderImpl : SpotifyProvider {
                 .offset(offset)
                 .market(market.get())
                 .build().execute().items
-                .map { this.trackToSong(it) }
+                .map(::trackToSong)
+                .also { songs ->
+                    songs.forEach { songCache.put(it.id, it) }
+                }
         } catch (e: IOException) {
             logger.error(e) { "Error searching for spotify songs (query: $query)" }
             emptyList()
@@ -135,6 +153,16 @@ class SpotifyProviderImpl : SpotifyProvider {
 
     @Throws(NoSuchSongException::class)
     override fun lookup(id: String): Song {
+        return try {
+            songCache[id]
+        } catch (e: ExecutionException) {
+            throw e.cause as NoSuchSongException
+        }
+    }
+
+    @Throws(NoSuchSongException::class)
+    fun actualLookup(id: String): Song {
+        logger.debug { "Looking up song with ID $id" }
         try {
             return trackToSong(api!!.getTrack(id).build().execute())
         } catch (e: IOException) {
@@ -145,18 +173,28 @@ class SpotifyProviderImpl : SpotifyProvider {
     }
 
     override fun lookupBatch(ids: List<String>): List<Song> {
-        val result = ArrayList<Song>(ids.size)
-        for (subIds in Lists.partition(ids, 50)) {
+        val result = Array(ids.size) { songCache.getIfPresent(ids[it]) }
+
+        val missingIds = ids.withIndex()
+            .filter { result[it.index] == null }
+
+        logger.debug { "Loading ${missingIds.size} of ${ids.size} requested songs" }
+
+        for (subIds in Lists.partition(missingIds, 50)) {
             try {
-                api!!.getSeveralTracks(*subIds.toTypedArray()).build().execute()
+                api!!.getSeveralTracks(*subIds.map { it.value }.toTypedArray()).build().execute()
                     .map { this.trackToSong(it) }
-                    .forEach { result.add(it) }
+                    .forEach { songCache.put(it.id, it) }
             } catch (e: IOException) {
                 logger.info(e) { "Could not look up some ID." }
             } catch (e: SpotifyWebApiException) {
                 logger.info(e) { "Could not look up some ID." }
             }
+
+            subIds.forEach { (index, value) ->
+                result[index] = songCache.get(value)!!
+            }
         }
-        return result.toList()
+        return result.map { it!! }
     }
 }
