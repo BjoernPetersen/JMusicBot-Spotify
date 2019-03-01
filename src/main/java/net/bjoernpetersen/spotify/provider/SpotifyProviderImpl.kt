@@ -156,7 +156,7 @@ class SpotifyProviderImpl : SpotifyProvider {
         return try {
             songCache[id]
         } catch (e: ExecutionException) {
-            throw e.cause as NoSuchSongException
+            throw e.cause!!
         }
     }
 
