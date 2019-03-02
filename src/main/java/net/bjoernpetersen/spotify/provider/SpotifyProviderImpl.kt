@@ -130,16 +130,6 @@ class SpotifyProviderImpl : SpotifyProvider {
         }
     }
 
-    override fun trackToSong(track: TrackSimplified): Song {
-        val id = track.id
-        val title = track.name
-        val description = track.artists.asSequence()
-            .map { it.name }
-            .joinToString()
-        val durationMs = track.durationMs
-        return createSong(id, title, description, durationMs, null)
-    }
-
     override fun trackToSong(track: Track): Song {
         val id = track.id
         val title = track.name

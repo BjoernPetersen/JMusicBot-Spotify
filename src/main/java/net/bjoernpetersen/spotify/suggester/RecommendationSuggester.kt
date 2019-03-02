@@ -206,8 +206,8 @@ class RecommendationSuggester : Suggester {
             .build()
             .execute()
             .tracks
-            // TODO these are simplified and missing the album art
-            .map { provider.trackToSong(it) }
+            .map { it.id }
+            .let { provider.lookupBatch(it) }
             .forEach { nextSongs.add(it) }
     }
 
