@@ -21,7 +21,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -80,9 +79,12 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
                 BrowserClientRequestUrl(SPOTIFY_URL, clientId.get()!!)
                     .setState(state)
                     .setScopes(
-                        Arrays.asList(
+                        listOf(
                             "user-modify-playback-state",
-                            "user-read-playback-state"
+                            "user-read-playback-state",
+                            "user-library-read",
+                            "playlist-read-private",
+                            "playlist-read-collaborative"
                         )
                     )
                     .setRedirectUri(redirectUrl.toExternalForm())
