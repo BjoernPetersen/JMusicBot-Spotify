@@ -68,7 +68,8 @@ class RecommendationSuggester : Suggester {
             description = "Spotify song URL of a song to base stations on if there is no alternative",
             configChecker = { if (it?.let(::getSongId) == null) "Invalid URL" else null },
             uiNode = TextBox,
-            default = "https://open.spotify.com/track/75n8FqbBeBLW2jUzvjdjXV?si=3LjPfzQdTcmnMn05gf7UNQ")
+            default = "https://open.spotify.com/track/75n8FqbBeBLW2jUzvjdjXV?si=3LjPfzQdTcmnMn05gf7UNQ"
+        )
 
         targetDanceability = config.SerializedEntry(
             key = "targetDanceability",
@@ -78,7 +79,8 @@ class RecommendationSuggester : Suggester {
             serializer = IntSerializer,
             configChecker = NonnullConfigChecker,
             uiNode = NumberBox(min = -1),
-            default = -1)
+            default = -1
+        )
         targetEnergy = config.SerializedEntry(
             key = "targetEnergy",
             description = "Energy represents a perceptual measure of intensity and activity." +
@@ -89,7 +91,8 @@ class RecommendationSuggester : Suggester {
             serializer = IntSerializer,
             configChecker = NonnullConfigChecker,
             uiNode = NumberBox(min = -1),
-            default = -1)
+            default = -1
+        )
         minInstrumentalness = config.SerializedEntry(
             key = "minInstrumentalness",
             description = "Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are" +
@@ -100,7 +103,8 @@ class RecommendationSuggester : Suggester {
             serializer = IntSerializer,
             configChecker = NonnullConfigChecker,
             uiNode = NumberBox(),
-            default = 0)
+            default = 0
+        )
         maxInstrumentalness = config.SerializedEntry(
             key = "maxInstrumentalness",
             description = "Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are" +
@@ -111,7 +115,8 @@ class RecommendationSuggester : Suggester {
             serializer = IntSerializer,
             configChecker = NonnullConfigChecker,
             uiNode = NumberBox(),
-            default = 100)
+            default = 100
+        )
         minLiveness = config.SerializedEntry(
             key = "minLiveness",
             description = "Detects the presence of an audience in the recording." +
@@ -121,7 +126,8 @@ class RecommendationSuggester : Suggester {
             serializer = IntSerializer,
             configChecker = NonnullConfigChecker,
             uiNode = NumberBox(),
-            default = 0)
+            default = 0
+        )
         maxLiveness = config.SerializedEntry(
             key = "maxLiveness",
             description = "Danceability describes how suitable a track is for dancing based on" +
@@ -130,14 +136,16 @@ class RecommendationSuggester : Suggester {
             serializer = IntSerializer,
             configChecker = NonnullConfigChecker,
             uiNode = NumberBox(),
-            default = 100)
+            default = 100
+        )
 
         return listOf(
             fallbackEntry,
             targetDanceability,
             targetEnergy,
             minInstrumentalness, maxInstrumentalness,
-            minLiveness, maxLiveness)
+            minLiveness, maxLiveness
+        )
     }
 
     override fun createStateEntries(state: Config) {
@@ -182,7 +190,6 @@ class RecommendationSuggester : Suggester {
             .setAccessToken(auth.token)
             .build()
 
-        // TODO base on multiple songs
         api.recommendations
             .market(provider.market.get())
             .seed_tracks(base.id)
