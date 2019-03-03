@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
+import kotlin.concurrent.withLock
 
 class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
 
@@ -109,23 +110,37 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
         try {
             logger.debug("Lock acquired")
 
-            val state = generateRandomString()
-            val receiver = LocalServerReceiver(port.get()!!, state)
-            val redirectUrl = receiver.redirectUrl
+            val doneLock = ReentrantLock()
+            val done = doneLock.newCondition()
 
-            val url = getSpotifyUrl(state, redirectUrl)
-            browserOpener.openDocument(url)
+            doneLock.withLock {
+                val state = generateRandomString()
+                var token: Token? = null
 
-            try {
-                val token = receiver.waitForToken(1, TimeUnit.MINUTES)
-                    ?: throw IOException("Received null token.")
+                val redirectUrl = CallbackVerticle.start(port.get()!!, state) {
+                    doneLock.withLock {
+                        if (it.succeeded()) {
+                            logger.debug { "Got new token" }
+                            val result = it.result()
+                            token = result
+                            accessToken.set(result.value)
+                            tokenExpiration.set(result.expiration)
+                        } else {
+                            logger.error(it.cause()) { "Could not obtain token" }
+                        }
+                        done.signal()
+                    }
+                }
 
-                accessToken.set(token.value)
-                tokenExpiration.set(token.expiration)
+                val url = getSpotifyUrl(state, redirectUrl)
+                browserOpener.openDocument(url)
 
-                return token
-            } catch (e: InterruptedException) {
-                throw IOException("Not authenticated within 1 minute.", e)
+                if (!done.await(1, TimeUnit.MINUTES)) {
+                    throw IOException("Not authenticated within 1 minute.")
+                }
+
+                if (token == null) throw IOException("No valid token received")
+                return token!!
             }
         } finally {
             lock.unlock()

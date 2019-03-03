@@ -45,16 +45,7 @@ tasks {
 
     "test"(Test::class) {
         useJUnitPlatform()
-    }
-}
-
-configurations {
-    "runtime" {
-        exclude("org.slf4j")
-        exclude("org.jetbrains")
-        exclude("org.jetbrains.kotlin")
-        exclude("com.google.guava")
-        exclude("com.google.inject")
+        systemProperties["junit.jupiter.execution.parallel.enabled"] = true
     }
 }
 
@@ -63,8 +54,11 @@ dependencies {
         group = "io.github.microutils",
         name = "kotlin-logging",
         version = Lib.KOTLIN_LOGGING
-    )
-
+    ) {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+    }
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
@@ -75,29 +69,49 @@ dependencies {
         group = "se.michaelthelin.spotify",
         name = "spotify-web-api-java",
         version = Lib.SPOTIFY
-    )
+    ) {
+        exclude("org.slf4j")
+        exclude("com.google.guava")
+        exclude("com.google.inject")
+    }
     implementation(
         group = "com.google.oauth-client",
         name = "google-oauth-client",
         version = Lib.OAUTHCLIENT
-    )
-    implementation(
-        group = "com.google.oauth-client",
-        name = "google-oauth-client-jetty",
-        version = Lib.OAUTHCLIENT
-    )
-    implementation(
-        group = "com.google.http-client",
-        name = "google-http-client",
-        version = Lib.OAUTHCLIENT
-    )
-    implementation(
-        group = "com.google.http-client",
-        name = "google-http-client-jackson2",
-        version = Lib.OAUTHCLIENT
-    )
+    ) {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+        exclude("com.google.guava")
+        exclude("com.google.inject")
+    }
 
-    testImplementation(kotlin("stdlib-jdk8"))
+    // Vertx for OAuth callback
+    implementation(group = "io.vertx", name = "vertx-web", version = Lib.VERTX) {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+        exclude("com.google.guava")
+        exclude("com.google.inject")
+    }
+    implementation(group = "io.vertx", name = "vertx-lang-kotlin", version = Lib.VERTX) {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+        exclude("com.google.guava")
+        exclude("com.google.inject")
+    }
+
+    testImplementation(
+        group = "org.slf4j",
+        name = "slf4j-simple",
+        version = Lib.SLF4J
+    )
+    testImplementation(
+        group = "com.github.bjoernpetersen",
+        name = "musicbot",
+        version = Lib.MUSICBOT
+    )
     testImplementation(
         group = "org.junit.jupiter",
         name = "junit-jupiter-api",
