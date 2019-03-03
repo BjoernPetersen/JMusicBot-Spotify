@@ -83,7 +83,6 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
                         listOf(
                             "user-modify-playback-state",
                             "user-read-playback-state",
-                            "user-library-read",
                             "playlist-read-private",
                             "playlist-read-collaborative"
                         )
