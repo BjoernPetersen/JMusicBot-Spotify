@@ -12,6 +12,7 @@ import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
+import net.bjoernpetersen.spotify.marketFromToken
 import net.bjoernpetersen.spotify.provider.SpotifyProvider
 import java.io.IOException
 import java.util.Collections
@@ -167,7 +168,7 @@ class PlaylistSuggester : Suggester {
         val playlistTracks = try {
             getApi()
                 .getPlaylistsTracks(playlistId)
-                .market(provider.market.get()!!)
+                .marketFromToken()
                 .offset(offset)
                 .build().execute()
         } catch (e: IOException) {

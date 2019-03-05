@@ -18,6 +18,7 @@ import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
+import net.bjoernpetersen.spotify.marketFromToken
 import net.bjoernpetersen.spotify.provider.SpotifyProvider
 import java.util.LinkedList
 import javax.inject.Inject
@@ -191,7 +192,7 @@ class RecommendationSuggester : Suggester {
             .build()
 
         api.recommendations
-            .market(provider.market.get())
+            .marketFromToken()
             .seed_tracks(base.id)
             .apply {
                 targetDanceability.setIfPresent { target_danceability(it) }

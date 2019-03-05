@@ -4,13 +4,10 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.collect.Lists
-import com.neovisionaries.i18n.CountryCode
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.specification.Track
-import com.wrapper.spotify.model_objects.specification.TrackSimplified
 import mu.KotlinLogging
-import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.loader.NoResource
 import net.bjoernpetersen.musicbot.api.player.Song
@@ -18,11 +15,10 @@ import net.bjoernpetersen.musicbot.spi.loader.Resource
 import net.bjoernpetersen.musicbot.spi.plugin.NoSuchSongException
 import net.bjoernpetersen.musicbot.spi.plugin.Playback
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
-import net.bjoernpetersen.spotify.CountryCodeSerializer
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
+import net.bjoernpetersen.spotify.marketFromToken
 import net.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import java.io.IOException
-import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -34,8 +30,6 @@ class SpotifyProviderImpl : SpotifyProvider {
     private lateinit var authenticator: SpotifyAuthenticator
     @Inject
     private lateinit var spotifyPlaybackFactory: SpotifyPlaybackFactory
-    override lateinit var market: Config.SerializedEntry<CountryCode>
-        private set
 
     private var api: SpotifyApi? = null
         get() {
@@ -52,22 +46,7 @@ class SpotifyProviderImpl : SpotifyProvider {
 
     private lateinit var songCache: LoadingCache<String, Song>
 
-    override fun createConfigEntries(config: Config): List<Config.Entry<*>> {
-        market = config.SerializedEntry(
-            "market",
-            "Country code of your Spotify account",
-            CountryCodeSerializer,
-            { if (it == CountryCode.UNDEFINED) "Required" else null },
-            ChoiceBox(
-                CountryCode::getName,
-                { CountryCode.values().sortedBy { it.getName() } },
-                lazy = true
-            ),
-            default = CountryCode.getByLocale(Locale.getDefault()) ?: CountryCode.UNDEFINED
-        )
-        return listOf<Config.Entry<*>>(market)
-    }
-
+    override fun createConfigEntries(config: Config): List<Config.Entry<*>> = emptyList()
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
     override fun createStateEntries(state: Config) = Unit
 
@@ -116,7 +95,7 @@ class SpotifyProviderImpl : SpotifyProvider {
             api!!.searchTracks(query)
                 .limit(40)
                 .offset(offset)
-                .market(market.get())
+                .marketFromToken()
                 .build().execute().items
                 .map(::trackToSong)
                 .also { songs ->
