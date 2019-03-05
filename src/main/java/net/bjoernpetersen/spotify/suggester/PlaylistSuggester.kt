@@ -41,8 +41,8 @@ class PlaylistSuggester : Suggester {
 
     override val name: String = "Spotify playlist"
     override val description: String = "Plays songs from one of your public Spotify playlists"
-    override var subject: String = playlist?.displayName ?: name
-        private set
+    override val subject: String
+        get() = playlist?.displayName ?: name
 
     private fun findPlaylists(): List<PlaylistChoice>? {
         var userId = userId.get()
