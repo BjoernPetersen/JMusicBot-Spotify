@@ -74,10 +74,12 @@ dependencies {
         exclude("com.google.guava")
         exclude("com.google.inject")
     }
+
+    // Ktor for OAuth callback
     implementation(
-        group = "com.google.oauth-client",
-        name = "google-oauth-client",
-        version = Lib.OAUTHCLIENT
+        group = "io.ktor",
+        name = "ktor-server-cio",
+        version = Lib.KTOR
     ) {
         exclude("org.slf4j")
         exclude("org.jetbrains")
@@ -86,22 +88,11 @@ dependencies {
         exclude("com.google.inject")
     }
 
-    // Vertx for OAuth callback
-    implementation(group = "io.vertx", name = "vertx-web", version = Lib.VERTX) {
-        exclude("org.slf4j")
-        exclude("org.jetbrains")
-        exclude("org.jetbrains.kotlin")
-        exclude("com.google.guava")
-        exclude("com.google.inject")
-    }
-    implementation(group = "io.vertx", name = "vertx-lang-kotlin", version = Lib.VERTX) {
-        exclude("org.slf4j")
-        exclude("org.jetbrains")
-        exclude("org.jetbrains.kotlin")
-        exclude("com.google.guava")
-        exclude("com.google.inject")
-    }
-
+    testImplementation(
+        group = "io.ktor",
+        name = "ktor-client-cio",
+        version = Lib.KTOR
+    )
     testImplementation(
         group = "org.slf4j",
         name = "slf4j-simple",

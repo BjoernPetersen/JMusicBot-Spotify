@@ -1,6 +1,9 @@
 package net.bjoernpetersen.spotify.auth
 
-import com.google.api.client.auth.oauth2.BrowserClientRequestUrl
+import io.ktor.http.encodeURLParameter
+import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ActionButton
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -25,8 +28,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
-import kotlin.concurrent.withLock
 
+@KtorExperimentalAPI
 class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
 
     private val logger = KotlinLogging.logger { }
@@ -76,20 +79,15 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
 
     private fun getSpotifyUrl(state: String, redirectUrl: URL): URL {
         try {
-            return URL(
-                BrowserClientRequestUrl(SPOTIFY_URL, clientId.get()!!)
-                    .setState(state)
-                    .setScopes(
-                        listOf(
-                            "user-modify-playback-state",
-                            "user-read-playback-state",
-                            "playlist-read-private",
-                            "playlist-read-collaborative"
-                        )
-                    )
-                    .setRedirectUri(redirectUrl.toExternalForm())
-                    .build()
-            )
+            return URL(SPOTIFY_URL.let { base ->
+                listOf(
+                    "client_id=$CLIENT_ID",
+                    "redirect_uri=${redirectUrl.toExternalForm()}",
+                    "response_type=token",
+                    "scope=${SCOPES.joinToString(" ").encodeURLParameter()}",
+                    "state=$state"
+                ).joinToString("&", prefix = "$base?")
+            })
         } catch (e: MalformedURLException) {
             throw IllegalArgumentException(e)
         }
@@ -109,37 +107,21 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
         try {
             logger.debug("Lock acquired")
 
-            val doneLock = ReentrantLock()
-            val done = doneLock.newCondition()
-
-            doneLock.withLock {
-                val state = generateRandomString()
-                var token: Token? = null
-
-                val redirectUrl = CallbackVerticle.start(port.get()!!, state) {
-                    doneLock.withLock {
-                        if (it.succeeded()) {
-                            logger.debug { "Got new token" }
-                            val result = it.result()
-                            token = result
-                            accessToken.set(result.value)
-                            tokenExpiration.set(result.expiration)
-                        } else {
-                            logger.error(it.cause()) { "Could not obtain token" }
-                        }
-                        done.signal()
-                    }
+            return try {
+                runBlocking {
+                    val state = generateRandomString()
+                    val callback = KtorCallback(port.get()!!)
+                    val callbackJob = async { callback.start(state) }
+                    val url = getSpotifyUrl(state, callback.callbackUrl)
+                    browserOpener.openDocument(url)
+                    callbackJob.await()
                 }
-
-                val url = getSpotifyUrl(state, redirectUrl)
-                browserOpener.openDocument(url)
-
-                if (!done.await(1, TimeUnit.MINUTES)) {
-                    throw IOException("Not authenticated within 1 minute.")
-                }
-
-                if (token == null) throw IOException("No valid token received")
-                return token!!
+            } catch (e: TimeoutTokenException) {
+                logger.error { "No token received within one minute" }
+                throw IOException(e)
+            } catch (e: InvalidTokenException) {
+                logger.error(e) { "Invalid token response received" }
+                throw IOException(e)
             }
         } finally {
             lock.unlock()
@@ -203,6 +185,12 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
     private companion object {
         private const val SPOTIFY_URL = " https://accounts.spotify.com/authorize"
         private const val CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a"
+        private val SCOPES = listOf(
+            "user-modify-playback-state",
+            "user-read-playback-state",
+            "playlist-read-private",
+            "playlist-read-collaborative"
+        )
 
         private fun toTimeString(instant: Instant) = DateTimeFormatter
             .ofLocalizedTime(FormatStyle.SHORT)
