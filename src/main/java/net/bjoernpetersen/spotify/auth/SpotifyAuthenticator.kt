@@ -8,7 +8,7 @@ private const val DESCRIPTION = "Provides Spotify authentication"
 @Base
 interface SpotifyAuthenticator : GenericPlugin {
 
-    val token: String
+    suspend fun getToken(): String
     override val description: String
         get() = DESCRIPTION
 }

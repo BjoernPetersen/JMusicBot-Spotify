@@ -1,5 +1,8 @@
 package net.bjoernpetersen.spotify.suggester
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.TextBox
 import net.bjoernpetersen.musicbot.api.player.Song
@@ -11,9 +14,14 @@ import net.bjoernpetersen.musicbot.spi.plugin.Suggester
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.provider.SpotifyProvider
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 @IdBase("Spotify song repeater")
-class SongRepeatSuggester : Suggester {
+class SongRepeatSuggester : Suggester, CoroutineScope {
+
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO + job
 
     @Inject
     private lateinit var provider: SpotifyProvider
@@ -27,22 +35,23 @@ class SongRepeatSuggester : Suggester {
     override val subject: String
         get() = song.title
 
-    override fun suggestNext(): Song {
+    override suspend fun suggestNext(): Song {
         return song
     }
 
-    override fun getNextSuggestions(maxLength: Int): List<Song> = listOf(song)
+    override suspend fun getNextSuggestions(maxLength: Int): List<Song> = listOf(song)
 
-    override fun removeSuggestion(song: Song) {}
+    override suspend fun removeSuggestion(song: Song) {}
 
-    override fun notifyPlayed(songEntry: SongEntry) {}
+    override suspend fun notifyPlayed(songEntry: SongEntry) {}
 
-    override fun dislike(song: Song) {}
+    override suspend fun dislike(song: Song) {}
 
     @Throws(InitializationException::class)
-    override fun initialize(initStateWriter: InitStateWriter) {
+    override suspend fun initialize(initStateWriter: InitStateWriter) {
+        initStateWriter.state("Looking up song")
         try {
-            song = songUrl.get()?.let { getSongId(it) }?.let(provider::lookup)
+            song = songUrl.get()?.let { getSongId(it) }?.let { provider.lookup(it) }
                 ?: throw InitializationException("Could not find song")
         } catch (e: NoSuchSongException) {
             throw InitializationException(e)
@@ -54,7 +63,8 @@ class SongRepeatSuggester : Suggester {
             "songUrl",
             "A Spotify song link",
             { if (it?.let(::getSongId) == null) "Invalid URL" else null },
-            TextBox, null)
+            TextBox, null
+        )
         return listOf(songUrl)
     }
 
@@ -62,5 +72,7 @@ class SongRepeatSuggester : Suggester {
 
     override fun createStateEntries(state: Config) {}
 
-    override fun close() {}
+    override suspend fun close() {
+        job.cancel()
+    }
 }

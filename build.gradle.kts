@@ -15,7 +15,7 @@ version = "0.16.0"
 
 repositories {
     jcenter()
-    // maven("https://oss.sonatype.org/content/repositories/snapshots")
+    maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 idea {
@@ -49,21 +49,18 @@ tasks {
     }
 }
 
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(1, TimeUnit.MINUTES)
+}
+
 dependencies {
-    implementation(
-        group = "io.github.microutils",
-        name = "kotlin-logging",
-        version = Lib.KOTLIN_LOGGING
-    ) {
-        exclude("org.slf4j")
-        exclude("org.jetbrains")
-        exclude("org.jetbrains.kotlin")
-    }
     compileOnly(
         group = "com.github.bjoernpetersen",
         name = "musicbot",
         version = Lib.MUSICBOT
-    )
+    ) {
+        isChanging = true
+    }
 
     implementation(
         group = "se.michaelthelin.spotify",
@@ -73,6 +70,18 @@ dependencies {
         exclude("org.slf4j")
         exclude("com.google.guava")
         exclude("com.google.inject")
+    }
+    implementation(
+        group = "io.ktor",
+        name = "ktor-client-cio",
+        version = Lib.KTOR
+    ) {
+        exclude("org.slf4j")
+        exclude("org.jetbrains")
+        exclude("org.jetbrains.kotlin")
+        exclude("com.google.guava")
+        exclude("com.google.inject")
+        exclude("org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
     }
 
     // Ktor for OAuth callback
@@ -86,13 +95,9 @@ dependencies {
         exclude("org.jetbrains.kotlin")
         exclude("com.google.guava")
         exclude("com.google.inject")
+        exclude("org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
     }
 
-    testImplementation(
-        group = "io.ktor",
-        name = "ktor-client-cio",
-        version = Lib.KTOR
-    )
     testImplementation(
         group = "org.slf4j",
         name = "slf4j-simple",

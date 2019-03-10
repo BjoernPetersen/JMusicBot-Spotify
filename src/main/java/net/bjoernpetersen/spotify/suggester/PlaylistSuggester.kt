@@ -1,7 +1,11 @@
 package net.bjoernpetersen.spotify.suggester
 
 import com.wrapper.spotify.SpotifyApi
-import com.wrapper.spotify.exceptions.SpotifyWebApiException
+import com.wrapper.spotify.model_objects.specification.PlaylistSimplified
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -18,11 +22,16 @@ import java.io.IOException
 import java.util.Collections
 import java.util.LinkedList
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 @IdBase("Spotify playlist")
-class PlaylistSuggester : Suggester {
+class PlaylistSuggester : Suggester, CoroutineScope {
 
     private val logger = KotlinLogging.logger {}
+
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO + job
 
     private lateinit var userId: Config.StringEntry
     private lateinit var playlistId: Config.SerializedEntry<PlaylistChoice>
@@ -33,7 +42,6 @@ class PlaylistSuggester : Suggester {
     @Inject
     private lateinit var provider: SpotifyProvider
 
-    private var api: SpotifyApi? = null
     private var playlist: PlaylistChoice? = null
     private lateinit var playlistSongs: List<Song>
 
@@ -45,54 +53,58 @@ class PlaylistSuggester : Suggester {
     override val subject: String
         get() = playlist?.displayName ?: name
 
-    private fun findPlaylists(): List<PlaylistChoice>? {
-        var userId = userId.get()
-        if (userId == null) {
-            logger.debug("No userId set, trying to retrieve it...")
-            userId = try {
-                loadUserId()
-            } catch (e: InitializationException) {
-                logger.info("user ID could not be found.")
-                return null
+    private suspend fun findPlaylists(): List<PlaylistChoice>? {
+        return withContext(coroutineContext) {
+            var userId = userId.get()
+            if (userId == null) {
+                logger.debug("No userId set, trying to retrieve it...")
+                userId = try {
+                    loadUserId()
+                } catch (e: InitializationException) {
+                    logger.info("user ID could not be found.")
+                    return@withContext null
+                }
+                this@PlaylistSuggester.userId.set(userId)
             }
-            this.userId.set(userId)
-        }
-        val playlists = try {
-            getApi()
-                .getListOfUsersPlaylists(userId)
-                .limit(50)
-                .build().execute()!!
-        } catch (e: Throwable) {
-            logger.error(e) { "Could not retrieve playlists" }
-            return null
-        }
+            val playlists = try {
+                getApi()
+                    .getListOfUsersPlaylists(userId)
+                    .limit(50)
+                    .build()
+                    .execute()
+            } catch (e: Throwable) {
+                logger.error(e) { "Could not retrieve playlists" }
+                return@withContext null
+            }
 
-        return playlists.items.map {
-            PlaylistChoice(it.id, it.name)
+            playlists.items.map {
+                PlaylistChoice(it.id, it.name)
+            }
         }
     }
 
-    override fun suggestNext(): Song {
+    override suspend fun suggestNext(): Song = withContext(coroutineContext) {
         val song = getNextSuggestions(1)[0]
         removeSuggestion(song)
-        return song
+        song
     }
 
-    override fun getNextSuggestions(maxLength: Int): List<Song> {
-        val startIndex = nextIndex
-        while (nextSongs.size < Math.max(Math.min(50, maxLength), 1)) {
-            // load more suggestions
-            nextSongs.add(playlistSongs[nextIndex])
-            nextIndex = (nextIndex + 1) % playlistSongs.size
-            if (nextIndex == startIndex) {
-                // the playlist is shorter than maxLength
-                break
+    override suspend fun getNextSuggestions(maxLength: Int): List<Song> =
+        withContext(coroutineContext) {
+            val startIndex = nextIndex
+            while (nextSongs.size < Math.max(Math.min(50, maxLength), 1)) {
+                // load more suggestions
+                nextSongs.add(playlistSongs[nextIndex])
+                nextIndex = (nextIndex + 1) % playlistSongs.size
+                if (nextIndex == startIndex) {
+                    // the playlist is shorter than maxLength
+                    break
+                }
             }
+            Collections.unmodifiableList(nextSongs)
         }
-        return Collections.unmodifiableList(nextSongs)
-    }
 
-    override fun removeSuggestion(song: Song) {
+    override suspend fun removeSuggestion(song: Song) = withContext<Unit>(coroutineContext) {
         nextSongs.remove(song)
     }
 
@@ -124,56 +136,55 @@ class PlaylistSuggester : Suggester {
 
     override fun createStateEntries(state: Config) {}
 
-    override fun initialize(initStateWriter: InitStateWriter) {
-        initStateWriter.state("Loading user ID")
-        if (userId.get() == null) {
-            userId.set(loadUserId())
+    override suspend fun initialize(initStateWriter: InitStateWriter) {
+        withContext(coroutineContext) {
+            initStateWriter.state("Loading user ID")
+            if (userId.get() == null) {
+                userId.set(loadUserId())
+            }
+
+            initStateWriter.state("Loading playlist songs")
+            playlist = playlistId.get()
+            playlistSongs = playlist?.id?.let { playlistId ->
+                loadPlaylist(playlistId)
+                    .let { if (shuffle.get()) it.shuffled() else it }
+                    .also { logger.info { "Loaded ${it.size} songs" } }
+            } ?: throw InitializationException("No playlist selected")
+
+            nextSongs = LinkedList()
         }
-
-        initStateWriter.state("Loading playlist songs")
-        playlist = playlistId.get()
-        playlistSongs = playlist?.id?.let { playlistId ->
-            loadPlaylist(playlistId)
-                .let { if (shuffle.get()) it.shuffled() else it }
-                .also { logger.info { "Loaded ${it.size} songs" } }
-        } ?: throw InitializationException("No playlist selected")
-
-        nextSongs = LinkedList()
     }
 
 
-    private fun getApi(): SpotifyApi {
-        api?.apply { return this }
-
-        val token = auth.token
-
-        return SpotifyApi.builder().setAccessToken(token).build().also {
-            api = it
-        }
+    private suspend fun getApi(): SpotifyApi {
+        val token = auth.getToken()
+        return SpotifyApi.builder()
+            .setAccessToken(token)
+            .build()
     }
 
     @Throws(InitializationException::class)
-    private fun loadUserId(): String {
+    private suspend fun loadUserId(): String {
         try {
-            return getApi().currentUsersProfile.build().execute().id
-        } catch (e: IOException) {
-            throw InitializationException("Could not get user ID", e)
-        } catch (e: SpotifyWebApiException) {
+            return getApi().currentUsersProfile
+                .build()
+                .execute()
+                .id
+        } catch (e: Exception) {
             throw InitializationException("Could not get user ID", e)
         }
     }
 
     @Throws(InitializationException::class)
-    private fun loadPlaylist(playlistId: String, offset: Int = 0): List<Song> {
+    private suspend fun loadPlaylist(playlistId: String, offset: Int = 0): List<Song> {
         val playlistTracks = try {
             getApi()
                 .getPlaylistsTracks(playlistId)
                 .marketFromToken()
                 .offset(offset)
-                .build().execute()
-        } catch (e: IOException) {
-            throw InitializationException("Could not load playlist", e)
-        } catch (e: SpotifyWebApiException) {
+                .build()
+                .execute()
+        } catch (e: Exception) {
             throw InitializationException("Could not load playlist", e)
         }
 
@@ -191,9 +202,8 @@ class PlaylistSuggester : Suggester {
     }
 
     @Throws(IOException::class)
-    override fun close() {
+    override suspend fun close() {
+        job.cancel()
         nextSongs.clear()
-        api = null
     }
-
 }

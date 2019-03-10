@@ -2,8 +2,12 @@ package net.bjoernpetersen.spotify.auth
 
 import io.ktor.http.encodeURLParameter
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ActionButton
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -24,21 +28,23 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 @KtorExperimentalAPI
-class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
+class SpotifyAuthenticatorImpl : SpotifyAuthenticator, CoroutineScope {
 
     private val logger = KotlinLogging.logger { }
-    private val lock: Lock = ReentrantLock()
+
     private val random = SecureRandom()
 
     override val name: String = "Spotify Auth"
-    override val token: String
-        get() = currentToken!!.value
+    override suspend fun getToken(): String = currentToken()!!.value
+
+    private val job = Job()
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    override val coroutineContext: CoroutineContext
+        get() = newSingleThreadContext(name) + job
 
     @Inject
     private lateinit var browserOpener: BrowserOpener
@@ -48,25 +54,28 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
 
     private lateinit var tokenExpiration: Config.SerializedEntry<Instant>
     private lateinit var accessToken: Config.StringEntry
-
+    // TODO rename
     private var currentToken: Token? = null
-        get() {
-            val current = field
-            if (current == null) {
-                field = initAuth()
-            } else if (current.isExpired()) {
-                field = authorize()
-            }
-            return field
-        }
         set(value) {
             field = value
             tokenExpiration.set(value?.expiration)
             accessToken.set(value?.value)
         }
 
-    @Throws(IOException::class, InterruptedException::class)
-    private fun initAuth(): Token {
+    private suspend fun currentToken(): Token? {
+        return withContext(coroutineContext) {
+            val current = currentToken
+            if (current == null) {
+                currentToken = initAuth()
+            } else if (current.isExpired()) {
+                currentToken = authorize()
+            }
+            currentToken
+        }
+    }
+
+
+    private suspend fun initAuth(): Token {
         if (accessToken.get() != null && tokenExpiration.get() != null) {
             val token = accessToken.get()!!
             val expirationDate = tokenExpiration.get()!!
@@ -82,7 +91,7 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
             return URL(SPOTIFY_URL.let { base ->
                 listOf(
                     "client_id=$CLIENT_ID",
-                    "redirect_uri=${redirectUrl.toExternalForm()}",
+                    "redirect_uri=${redirectUrl.toExternalForm().encodeURLParameter()}",
                     "response_type=token",
                     "scope=${SCOPES.joinToString(" ").encodeURLParameter()}",
                     "state=$state"
@@ -97,25 +106,18 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
         return Integer.toString(random.nextInt(Integer.MAX_VALUE))
     }
 
-    @Throws(IOException::class, InterruptedException::class)
-    private fun authorize(): Token {
+    private suspend fun authorize(): Token {
+        val prevToken = currentToken
         logger.debug("Acquiring auth lock...")
-        if (!lock.tryLock(10, TimeUnit.SECONDS)) {
-            logger.warn("Can't acquire Auth lock!")
-            throw InterruptedException()
-        }
-        try {
-            logger.debug("Lock acquired")
-
-            return try {
-                runBlocking {
-                    val state = generateRandomString()
-                    val callback = KtorCallback(port.get()!!)
-                    val callbackJob = async { callback.start(state) }
-                    val url = getSpotifyUrl(state, callback.callbackUrl)
-                    browserOpener.openDocument(url)
-                    callbackJob.await()
-                }
+        return withContext(coroutineContext) {
+            if (currentToken !== prevToken) currentToken!!
+            else try {
+                val state = generateRandomString()
+                val callback = KtorCallback(port.get()!!)
+                val callbackJob = async(Dispatchers.IO) { callback.start(state) }
+                val url = getSpotifyUrl(state, callback.callbackUrl)
+                browserOpener.openDocument(url)
+                callbackJob.await()
             } catch (e: TimeoutTokenException) {
                 logger.error { "No token received within one minute" }
                 throw IOException(e)
@@ -123,14 +125,14 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
                 logger.error(e) { "Invalid token response received" }
                 throw IOException(e)
             }
-        } finally {
-            lock.unlock()
         }
     }
 
-    override fun initialize(initStateWriter: InitStateWriter) {
+    override suspend fun initialize(initStateWriter: InitStateWriter) {
         initStateWriter.state("Retrieving token...")
-        token.also { initStateWriter.state("Retrieved token.") }
+        withContext(coroutineContext) {
+            currentToken().also { initStateWriter.state("Retrieved token.") }
+        }
     }
 
     override fun createConfigEntries(config: Config): List<Config.Entry<*>> = listOf(
@@ -150,12 +152,14 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
             InstantSerializer,
             NonnullConfigChecker,
             ActionButton("Refresh", ::toTimeString) {
-                try {
-                    val token = authorize()
-                    this.currentToken = token
-                    true
-                } catch (e: Exception) {
-                    false
+                withContext(coroutineContext) {
+                    try {
+                        val token = authorize()
+                        currentToken = token
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
                 }
             })
 
@@ -179,7 +183,8 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator {
 
     override fun createStateEntries(state: Config) {}
 
-    override fun close() {
+    override suspend fun close() {
+        job.cancel()
     }
 
     private companion object {

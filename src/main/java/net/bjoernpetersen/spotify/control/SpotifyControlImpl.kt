@@ -1,8 +1,12 @@
 package net.bjoernpetersen.spotify.control
 
 import com.wrapper.spotify.SpotifyApi
-import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.miscellaneous.Device
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.ChoiceBox
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -12,8 +16,9 @@ import net.bjoernpetersen.musicbot.spi.plugin.InitializationException
 import net.bjoernpetersen.musicbot.spi.plugin.management.InitStateWriter
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
-class SpotifyControlImpl : SpotifyControl {
+class SpotifyControlImpl : SpotifyControl, CoroutineScope {
 
     private val logger = KotlinLogging.logger { }
 
@@ -24,18 +29,27 @@ class SpotifyControlImpl : SpotifyControl {
     override val deviceId: String
         get() = device.get()?.id ?: throw IllegalStateException()
 
-    private fun findDevices(): List<SimpleDevice>? {
-        return try {
-            SpotifyApi.builder()
-                .setAccessToken(authenticator.token)
-                .build()
-                .usersAvailableDevices
-                .build()
-                .execute()
-                .map(::SimpleDevice)
-        } catch (e: SpotifyWebApiException) {
-            logger.error(e) { "Could not retrieve device list" }
-            null
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO + job
+
+    private suspend fun findDevices(): List<SimpleDevice>? {
+        return coroutineScope {
+            withContext(coroutineContext) {
+                logger.debug { "Retrieving device list" }
+                try {
+                    SpotifyApi.builder()
+                        .setAccessToken(authenticator.getToken())
+                        .build()
+                        .usersAvailableDevices
+                        .build()
+                        .execute()
+                        .map(::SimpleDevice)
+                } catch (e: Exception) {
+                    logger.error(e) { "Could not retrieve device list" }
+                    null
+                }
+            }
         }
     }
 
@@ -53,14 +67,16 @@ class SpotifyControlImpl : SpotifyControl {
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
     override fun createStateEntries(state: Config) {}
 
-    override fun initialize(initStateWriter: InitStateWriter) {
+    override suspend fun initialize(initStateWriter: InitStateWriter) {
         initStateWriter.state("Checking device config")
         if (device.get() == null) {
             throw InitializationException("No device selected")
         }
     }
 
-    override fun close() {}
+    override suspend fun close() {
+        job.cancel()
+    }
 }
 
 private data class SimpleDevice(val id: String, val name: String) {

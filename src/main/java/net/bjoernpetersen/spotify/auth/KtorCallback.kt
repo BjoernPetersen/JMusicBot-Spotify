@@ -47,7 +47,7 @@ internal class KtorCallback(private val port: Int) {
                 get(CALLBACK_PATH) {
                     call.respondText(
                         redirectPageContent,
-                        ContentType.parse("text/html")
+                        ContentType.Text.Html
                     )
                 }
                 get(REDIRECTED_PATH) {

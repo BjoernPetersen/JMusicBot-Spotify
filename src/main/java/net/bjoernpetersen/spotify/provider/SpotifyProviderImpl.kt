@@ -7,6 +7,14 @@ import com.google.common.collect.Lists
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.SpotifyWebApiException
 import com.wrapper.spotify.model_objects.specification.Track
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.loader.NoResource
@@ -19,11 +27,11 @@ import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import net.bjoernpetersen.spotify.marketFromToken
 import net.bjoernpetersen.spotify.playback.SpotifyPlaybackFactory
 import java.io.IOException
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
-class SpotifyProviderImpl : SpotifyProvider {
+class SpotifyProviderImpl : SpotifyProvider, CoroutineScope {
 
     private val logger = KotlinLogging.logger {}
     @Inject
@@ -31,46 +39,56 @@ class SpotifyProviderImpl : SpotifyProvider {
     @Inject
     private lateinit var spotifyPlaybackFactory: SpotifyPlaybackFactory
 
-    private var api: SpotifyApi? = null
-        get() {
-            field!!.accessToken = authenticator.token
-            return field
-        }
-        set(value) {
-            field = value!!
-        }
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO + job
 
     override val name: String = "Spotify"
     override val description: String = "Provides songs from Spotify"
     override val subject: String = "Spotify"
 
-    private lateinit var songCache: LoadingCache<String, Song>
+    private lateinit var songCache: LoadingCache<String, Deferred<Song>>
 
     override fun createConfigEntries(config: Config): List<Config.Entry<*>> = emptyList()
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
     override fun createStateEntries(state: Config) = Unit
 
-    override fun initialize(initStateWriter: InitStateWriter) {
-        api = SpotifyApi.builder()
-            .setAccessToken(authenticator.token)
+    private suspend fun getApi(): SpotifyApi {
+        return SpotifyApi.builder()
+            .setAccessToken(authenticator.getToken())
             .build()
+    }
+
+    override suspend fun initialize(initStateWriter: InitStateWriter) {
+        initStateWriter.state("Trying to access API")
+        getApi()
 
         songCache = CacheBuilder.newBuilder()
             .initialCapacity(512)
             .maximumSize(2048)
             .expireAfterAccess(1, TimeUnit.HOURS)
-            .build(object : CacheLoader<String, Song>() {
-                override fun load(key: String): Song = actualLookup(key)
+            .build(object : CacheLoader<String, Deferred<Song>>() {
+                @Suppress("DeferredIsResult")
+                override fun load(key: String): Deferred<Song> {
+                    return runBlocking {
+                        withContext(coroutineContext) {
+                            async {
+                                actualLookup(key)
+                            }
+                        }
+                    }
+                }
             })
     }
 
-    override fun supplyPlayback(song: Song, resource: Resource): Playback {
+    override suspend fun supplyPlayback(song: Song, resource: Resource): Playback {
         return spotifyPlaybackFactory.getPlayback(song.id)
     }
 
-    override fun loadSong(song: Song): Resource = NoResource
+    override suspend fun loadSong(song: Song): Resource = NoResource
 
-    override fun close() {
+    override suspend fun close() {
+        job.cancel()
     }
 
     private fun createSong(
@@ -87,25 +105,32 @@ class SpotifyProviderImpl : SpotifyProvider {
         )
     }
 
-    override fun search(query: String, offset: Int): List<Song> {
+    override suspend fun search(query: String, offset: Int): List<Song> {
         if (query.isEmpty()) {
             return emptyList()
         }
-        return try {
-            api!!.searchTracks(query)
-                .limit(40)
-                .offset(offset)
-                .marketFromToken()
-                .build().execute().items
-                .map(::trackToSong)
-                .also { songs ->
-                    songs.forEach { songCache.put(it.id, it) }
-                }
-        } catch (e: IOException) {
-            logger.error(e) { "Error searching for spotify songs (query: $query)" }
-            emptyList()
-        } catch (e: SpotifyWebApiException) {
-            emptyList()
+        return withContext(coroutineContext) {
+            try {
+                getApi().searchTracks(query)
+                    .limit(40)
+                    .offset(offset)
+                    .marketFromToken()
+                    .build()
+                    .execute()
+                    .items
+                    .map(::trackToSong)
+                    .also { songs ->
+                        songs.forEach {
+                            songCache.put(it.id, CompletableDeferred(it))
+                        }
+                    }
+            } catch (e: IOException) {
+                logger.error(e) { "Error searching for spotify songs (query: $query)" }
+                emptyList<Song>()
+            } catch (e: SpotifyWebApiException) {
+                logger.error(e) { "Error searching for spotify songs (query: $query)" }
+                emptyList<Song>()
+            }
         }
     }
 
@@ -122,19 +147,22 @@ class SpotifyProviderImpl : SpotifyProvider {
     }
 
     @Throws(NoSuchSongException::class)
-    override fun lookup(id: String): Song {
-        return try {
-            songCache[id]
-        } catch (e: ExecutionException) {
-            throw e.cause!!
+    override suspend fun lookup(id: String): Song {
+        return withContext(coroutineContext) {
+            songCache[id].await()
         }
     }
 
     @Throws(NoSuchSongException::class)
-    fun actualLookup(id: String): Song {
+    private suspend fun actualLookup(id: String): Song {
         logger.debug { "Looking up song with ID $id" }
         try {
-            return trackToSong(api!!.getTrack(id).build().execute())
+            return trackToSong(
+                getApi()
+                    .getTrack(id)
+                    .build()
+                    .execute()
+            )
         } catch (e: IOException) {
             throw NoSuchSongException("Error looking up song: $id", SpotifyProviderImpl::class, e)
         } catch (e: SpotifyWebApiException) {
@@ -142,29 +170,34 @@ class SpotifyProviderImpl : SpotifyProvider {
         }
     }
 
-    override fun lookupBatch(ids: List<String>): List<Song> {
-        val result = Array(ids.size) { songCache.getIfPresent(ids[it]) }
+    override suspend fun lookupBatch(ids: List<String>): List<Song> {
+        return withContext(coroutineContext) {
+            val result = Array(ids.size) { songCache.getIfPresent(ids[it]) }
 
-        val missingIds = ids.withIndex()
-            .filter { result[it.index] == null }
+            val missingIds = ids.withIndex()
+                .filter { result[it.index] == null }
 
-        logger.debug { "Loading ${missingIds.size} of ${ids.size} requested songs" }
+            logger.debug { "Loading ${missingIds.size} of ${ids.size} requested songs" }
 
-        for (subIds in Lists.partition(missingIds, 50)) {
-            try {
-                api!!.getSeveralTracks(*subIds.map { it.value }.toTypedArray()).build().execute()
-                    .map { this.trackToSong(it) }
-                    .forEach { songCache.put(it.id, it) }
-            } catch (e: IOException) {
-                logger.info(e) { "Could not look up some ID." }
-            } catch (e: SpotifyWebApiException) {
-                logger.info(e) { "Could not look up some ID." }
+            for (subIds in Lists.partition(missingIds, 50)) {
+                try {
+                    getApi()
+                        .getSeveralTracks(*subIds.map { it.value }.toTypedArray())
+                        .build()
+                        .execute()
+                        .map { trackToSong(it) }
+                        .forEach { songCache.put(it.id, CompletableDeferred(it)) }
+                } catch (e: IOException) {
+                    logger.info(e) { "Could not look up some ID." }
+                } catch (e: SpotifyWebApiException) {
+                    logger.info(e) { "Could not look up some ID." }
+                }
+
+                subIds.forEach { (index, value) ->
+                    result[index] = songCache.get(value)!!
+                }
             }
-
-            subIds.forEach { (index, value) ->
-                result[index] = songCache.get(value)!!
-            }
+            result.map { it!!.await() }
         }
-        return result.map { it!! }
     }
 }

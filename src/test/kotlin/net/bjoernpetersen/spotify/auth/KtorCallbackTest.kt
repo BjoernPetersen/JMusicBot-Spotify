@@ -11,6 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import java.time.Duration
 import java.util.LinkedList
 import java.util.function.Supplier
 
@@ -97,11 +99,13 @@ class KtorCallbackTest {
             }
             .map { (token, expirationTime, state) ->
                 dynamicTest("token: $token, expirationTime: $expirationTime, state: $state") {
-                    assertThrows<TimeoutTokenException> {
-                        test(
-                            portSupplier.get(),
-                            false, 401, state, token, expirationTime
-                        )
+                    assertTimeoutPreemptively(Duration.ofSeconds(80)) {
+                        assertThrows<TimeoutTokenException> {
+                            test(
+                                portSupplier.get(),
+                                false, 401, state, token, expirationTime
+                            )
+                        }
                     }
                 }
             }

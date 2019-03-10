@@ -1,6 +1,10 @@
 package net.bjoernpetersen.spotify.suggester
 
 import com.wrapper.spotify.SpotifyApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.Config
 import net.bjoernpetersen.musicbot.api.config.ConfigSerializer
@@ -22,16 +26,21 @@ import net.bjoernpetersen.spotify.marketFromToken
 import net.bjoernpetersen.spotify.provider.SpotifyProvider
 import java.util.LinkedList
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 
 @IdBase("Spotify recommendation suggester")
-class RecommendationSuggester : Suggester {
+class RecommendationSuggester : Suggester, CoroutineScope {
 
     private val logger = KotlinLogging.logger { }
 
     override val name: String = "Spotify recommendation suggester"
     override val description: String =
         "Suggests Spotify songs based on the last played manually enqueued song"
+
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO + job
 
     @Inject
     private lateinit var auth: SpotifyAuthenticator
@@ -54,11 +63,12 @@ class RecommendationSuggester : Suggester {
             ?: getSongId(fallbackEntry.get()!!)
             ?: throw IllegalStateException("No valid base or fallback set")
 
-    private val baseSong: Song
-        get() {
-            val baseId = baseId
-            return provider.lookup(baseId)
-        }
+    private lateinit var baseSong: Song
+
+    private suspend fun lookupBaseSong(): Song {
+        val baseId = baseId
+        return provider.lookup(baseId)
+    }
 
     override val subject: String
         get() = "Based on ${baseEntry.get()?.name ?: baseSong.title}"
@@ -159,21 +169,23 @@ class RecommendationSuggester : Suggester {
 
     override fun createSecretEntries(secrets: Config): List<Config.Entry<*>> = emptyList()
 
-    override fun initialize(initStateWriter: InitStateWriter) {
-        initStateWriter.state("Trying to retrieve base song")
-        val baseSong = try {
-            baseSong
-        } catch (e: NoSuchSongException) {
-            throw InitializationException(e)
-        } catch (e: IllegalStateException) {
-            throw InitializationException(e)
-        }
+    override suspend fun initialize(initStateWriter: InitStateWriter) {
+        withContext(coroutineContext) {
+            initStateWriter.state("Trying to retrieve base song")
+            baseSong = try {
+                lookupBaseSong()
+            } catch (e: NoSuchSongException) {
+                throw InitializationException(e)
+            } catch (e: IllegalStateException) {
+                throw InitializationException(e)
+            }
 
-        initStateWriter.state("Filling suggestions")
-        fillNextSongs(baseSong)
+            initStateWriter.state("Filling suggestions")
+            fillNextSongs()
 
-        if (nextSongs.isEmpty()) {
-            throw InitializationException("Could not get any recommendations")
+            if (nextSongs.isEmpty()) {
+                throw InitializationException("Could not get any recommendations")
+            }
         }
     }
 
@@ -186,54 +198,58 @@ class RecommendationSuggester : Suggester {
         set(value.toPercentFloat())
     }
 
-    private fun fillNextSongs(base: Song) {
-        val api = SpotifyApi.builder()
-            .setAccessToken(auth.token)
-            .build()
+    private suspend fun fillNextSongs() {
+        withContext(coroutineContext) {
+            val api = SpotifyApi.builder()
+                .setAccessToken(auth.getToken())
+                .build()
 
-        api.recommendations
-            .marketFromToken()
-            .seed_tracks(base.id)
-            .apply {
-                targetDanceability.setIfPresent { target_danceability(it) }
-                targetEnergy.setIfPresent { target_energy(it) }
+            api.recommendations
+                .marketFromToken()
+                .seed_tracks(baseSong.id)
+                .apply {
+                    targetDanceability.setIfPresent { target_danceability(it) }
+                    targetEnergy.setIfPresent { target_energy(it) }
 
-                minInstrumentalness.setIfPresent { min_instrumentalness(it) }
-                maxInstrumentalness.setIfPresent { max_instrumentalness(it) }
+                    minInstrumentalness.setIfPresent { min_instrumentalness(it) }
+                    maxInstrumentalness.setIfPresent { max_instrumentalness(it) }
 
-                minLiveness.setIfPresent { min_liveness(it) }
-                maxLiveness.setIfPresent { max_liveness(it) }
-            }
-            .build()
-            .execute()
-            .tracks
-            .map { it.id }
-            .let { provider.lookupBatch(it) }
-            .forEach { nextSongs.add(it) }
-    }
-
-    override fun getNextSuggestions(maxLength: Int): List<Song> {
-        if (nextSongs.size <= 1) {
-            fillNextSongs(baseSong)
-            if (nextSongs.isEmpty()) {
-                throw BrokenSuggesterException()
-            }
+                    minLiveness.setIfPresent { min_liveness(it) }
+                    maxLiveness.setIfPresent { max_liveness(it) }
+                }
+                .build()
+                .execute()
+                .tracks
+                .map { it.id }
+                .let { provider.lookupBatch(it) }
+                .forEach { nextSongs.add(it) }
         }
-
-        return nextSongs.toList().let { it.subList(0, min(maxLength, it.size)) }
     }
 
-    override fun suggestNext(): Song {
+    override suspend fun getNextSuggestions(maxLength: Int): List<Song> {
+        return withContext(coroutineContext) {
+            if (nextSongs.size <= 1) {
+                fillNextSongs()
+                if (nextSongs.isEmpty()) {
+                    throw BrokenSuggesterException()
+                }
+            }
+
+            nextSongs.toList().let { it.subList(0, min(maxLength, it.size)) }
+        }
+    }
+
+    override suspend fun suggestNext(): Song = withContext(coroutineContext) {
         val song = getNextSuggestions(1).first()
         nextSongs.remove(song)
-        return song
+        song
     }
 
-    override fun removeSuggestion(song: Song) {
+    override suspend fun removeSuggestion(song: Song) = withContext<Unit>(coroutineContext) {
         nextSongs.remove(song)
     }
 
-    override fun notifyPlayed(songEntry: SongEntry) {
+    override suspend fun notifyPlayed(songEntry: SongEntry) = withContext(coroutineContext) {
         super.notifyPlayed(songEntry)
         if (songEntry.user != null) {
             val song = songEntry.song
@@ -242,7 +258,9 @@ class RecommendationSuggester : Suggester {
         }
     }
 
-    override fun close() {}
+    override suspend fun close() {
+        job.cancel()
+    }
 }
 
 private data class SimpleSong(val id: String, val name: String) {
