@@ -33,6 +33,7 @@ jobs:
             - save_cache:
                 paths:
                   - ~/.gradle
+                  - .gradle
                 key: v3-{{ checksum "build.gradle.kts" }}-{{ checksum "buildSrc/src/main/kotlin/Plugin.kt" }}-{{ checksum "buildSrc/src/main/kotlin/Lib.kt" }}
 
             - run: ./gradlew test
