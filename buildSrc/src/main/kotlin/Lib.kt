@@ -1,7 +1,7 @@
 object Lib {
     const val KOTLIN = Plugin.KOTLIN
 
-    const val MUSICBOT = "0.19.0-SNAPSHOT"
+    const val MUSICBOT = "0.19.0"
 
     const val SPOTIFY = "2.1.2"
     const val KTOR = "1.1.3"
