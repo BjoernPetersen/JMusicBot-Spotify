@@ -6,6 +6,7 @@ import com.wrapper.spotify.exceptions.detailed.BadGatewayException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.spi.plugin.AbstractPlayback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackState
@@ -92,6 +93,8 @@ internal class SpotifyPlayback(
             }
             return
         }
+
+        yield()
 
         state.apply {
             val playbackState = if (!is_playing) {
