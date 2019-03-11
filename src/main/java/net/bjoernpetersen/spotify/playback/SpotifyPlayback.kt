@@ -2,6 +2,7 @@ package net.bjoernpetersen.spotify.playback
 
 import com.google.gson.JsonArray
 import com.wrapper.spotify.SpotifyApi
+import com.wrapper.spotify.exceptions.detailed.BadGatewayException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withContext
@@ -86,29 +87,34 @@ internal class SpotifyPlayback(
                 .execute()
         } catch (e: Exception) {
             logger.error(e) { "Could not check state" }
-            listener(PlaybackState.BROKEN)
+            if (e !is BadGatewayException) {
+                listener(PlaybackState.BROKEN)
+            }
             return
         }
 
         state.apply {
-            listener(
-                if (!is_playing) {
-                    if (
-                        progress_ms == null || progress_ms == 0
-                        || item == null || item.id != songId
-                    ) return markDone()
+            val playbackState = if (!is_playing) {
+                if (
+                    progress_ms == null || progress_ms == 0
+                    || item == null || item.id != songId
+                ) return markDone()
 
-                    PlaybackState.PAUSE
-                } else if (item != null && item.id != songId) {
-                    return markDone()
-                } else {
-                    PlaybackState.PLAY
-                }
-            )
+                PlaybackState.PAUSE
+            } else if (item != null && item.id != songId) {
+                return markDone()
+            } else {
+                PlaybackState.PLAY
+            }
+
+            if (!isDone()) listener(playbackState)
         }
     }
 
     override suspend fun close() {
+        // Mark done so the state checker doesn't react to pausing
+        markDone()
+        // Pause, so the playback actually stops
         pause()
         super.close()
     }
