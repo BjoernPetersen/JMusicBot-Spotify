@@ -26,11 +26,6 @@ idea {
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks {
     "compileKotlin"(KotlinCompile::class) {
         kotlinOptions.jvmTarget = "1.8"
