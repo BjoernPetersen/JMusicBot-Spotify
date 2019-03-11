@@ -71,10 +71,8 @@ class SpotifyProviderImpl : SpotifyProvider, CoroutineScope {
                 @Suppress("DeferredIsResult")
                 override fun load(key: String): Deferred<Song> {
                     return runBlocking {
-                        withContext(coroutineContext) {
-                            async {
-                                actualLookup(key)
-                            }
+                        async(coroutineContext) {
+                            actualLookup(key)
                         }
                     }
                 }
