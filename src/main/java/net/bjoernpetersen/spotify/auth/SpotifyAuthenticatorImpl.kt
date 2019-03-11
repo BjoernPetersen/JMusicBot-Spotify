@@ -54,7 +54,6 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator, CoroutineScope {
 
     private lateinit var tokenExpiration: Config.SerializedEntry<Instant>
     private lateinit var accessToken: Config.StringEntry
-    // TODO rename
     private var currentToken: Token? = null
         set(value) {
             field = value
@@ -73,7 +72,6 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator, CoroutineScope {
             currentToken
         }
     }
-
 
     private suspend fun initAuth(): Token {
         if (accessToken.get() != null && tokenExpiration.get() != null) {
@@ -191,6 +189,7 @@ class SpotifyAuthenticatorImpl : SpotifyAuthenticator, CoroutineScope {
         private const val SPOTIFY_URL = " https://accounts.spotify.com/authorize"
         private const val CLIENT_ID = "902fe6b9a4b6421caf88ee01e809939a"
         private val SCOPES = listOf(
+            "user-read-private",
             "user-modify-playback-state",
             "user-read-playback-state",
             "playlist-read-private",
