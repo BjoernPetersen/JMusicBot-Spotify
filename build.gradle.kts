@@ -50,9 +50,7 @@ dependencies {
         group = "com.github.bjoernpetersen",
         name = "musicbot",
         version = Lib.MUSICBOT
-    ) {
-        isChanging = true
-    }
+    )
 
     implementation(
         group = "se.michaelthelin.spotify",
