@@ -254,6 +254,7 @@ class RecommendationSuggester : Suggester, CoroutineScope {
         if (songEntry.user != null) {
             val song = songEntry.song
             baseEntry.set(SimpleSong(song.id, song.title))
+            baseSong = song
             nextSongs.clear()
         }
     }
