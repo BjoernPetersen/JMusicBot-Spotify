@@ -1,7 +1,6 @@
 package net.bjoernpetersen.spotify.provider
 
 import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.collect.Lists
 import com.wrapper.spotify.SpotifyApi
@@ -12,8 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.api.config.Config
@@ -67,16 +64,7 @@ class SpotifyProviderImpl : SpotifyProvider, CoroutineScope {
             .initialCapacity(512)
             .maximumSize(2048)
             .expireAfterAccess(1, TimeUnit.HOURS)
-            .build(object : CacheLoader<String, Deferred<Song>>() {
-                @Suppress("DeferredIsResult")
-                override fun load(key: String): Deferred<Song> {
-                    return runBlocking {
-                        async(coroutineContext) {
-                            actualLookup(key)
-                        }
-                    }
-                }
-            })
+            .build(AsyncLoader(this) { actualLookup(it) })
     }
 
     override suspend fun supplyPlayback(song: Song, resource: Resource): Playback {
