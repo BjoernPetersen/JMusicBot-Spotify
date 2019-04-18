@@ -50,7 +50,9 @@ dependencies {
         group = "com.github.bjoernpetersen",
         name = "musicbot",
         version = Lib.MUSICBOT
-    )
+    ) {
+        isChanging = Lib.MUSICBOT.contains("SNAPSHOT")
+    }
 
     implementation(
         group = "se.michaelthelin.spotify",
