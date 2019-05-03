@@ -3,6 +3,7 @@ package net.bjoernpetersen.spotify.playback
 import com.google.gson.JsonArray
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.exceptions.detailed.BadGatewayException
+import com.wrapper.spotify.model_objects.miscellaneous.CurrentlyPlayingContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withContext
@@ -82,7 +83,7 @@ internal class SpotifyPlayback(
     }
 
     private suspend fun checkState() {
-        val state = try {
+        val state: CurrentlyPlayingContext? = try {
             getApi().informationAboutUsersCurrentPlayback
                 .build()
                 .execute()
@@ -91,6 +92,11 @@ internal class SpotifyPlayback(
             if (e !is BadGatewayException) {
                 listener(PlaybackState.BROKEN)
             }
+            return
+        }
+
+        if (state == null) {
+            logger.debug { "Current context is null" }
             return
         }
 
