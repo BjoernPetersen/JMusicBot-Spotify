@@ -37,7 +37,7 @@ internal class SpotifyPlayback(
                     .execute()
             } catch (e: Exception) {
                 logger.error(e) { "Could not pause playback" }
-                playbackListener(PlaybackState.BROKEN)
+                feedbackChannel.updateState(PlaybackState.BROKEN)
             }
         }
     }
@@ -70,7 +70,7 @@ internal class SpotifyPlayback(
                 isStarted = true
             } catch (e: Exception) {
                 logger.error(e) { "Could not play playback" }
-                playbackListener(PlaybackState.BROKEN)
+                feedbackChannel.updateState(PlaybackState.BROKEN)
             }
         }
     }
@@ -83,7 +83,7 @@ internal class SpotifyPlayback(
         } catch (e: Exception) {
             logger.error(e) { "Could not check state" }
             if (e !is BadGatewayException) {
-                playbackListener(PlaybackState.BROKEN)
+                feedbackChannel.updateState(PlaybackState.BROKEN)
             }
             return
         }
@@ -109,7 +109,7 @@ internal class SpotifyPlayback(
                 PlaybackState.PLAY
             }
 
-            if (!isDone()) playbackListener(playbackState)
+            if (!isDone()) feedbackChannel.updateState(playbackState)
         }
     }
 
