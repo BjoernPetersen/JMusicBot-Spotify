@@ -11,7 +11,6 @@ import kotlinx.coroutines.yield
 import mu.KotlinLogging
 import net.bjoernpetersen.musicbot.spi.plugin.AbstractPlayback
 import net.bjoernpetersen.musicbot.spi.plugin.PlaybackState
-import net.bjoernpetersen.musicbot.spi.plugin.PlaybackStateListener
 import net.bjoernpetersen.spotify.auth.SpotifyAuthenticator
 import java.time.Duration
 
@@ -29,12 +28,6 @@ internal class SpotifyPlayback(
     private val songUri = "spotify:track:$songId"
     private var isStarted = false
 
-    private lateinit var listener: PlaybackStateListener
-
-    override fun setPlaybackStateListener(listener: PlaybackStateListener) {
-        this.listener = listener
-    }
-
     override suspend fun pause() {
         withContext(coroutineContext) {
             try {
@@ -44,7 +37,7 @@ internal class SpotifyPlayback(
                     .execute()
             } catch (e: Exception) {
                 logger.error(e) { "Could not pause playback" }
-                listener(PlaybackState.BROKEN)
+                playbackListener(PlaybackState.BROKEN)
             }
         }
     }
@@ -77,7 +70,7 @@ internal class SpotifyPlayback(
                 isStarted = true
             } catch (e: Exception) {
                 logger.error(e) { "Could not play playback" }
-                listener(PlaybackState.BROKEN)
+                playbackListener(PlaybackState.BROKEN)
             }
         }
     }
@@ -90,7 +83,7 @@ internal class SpotifyPlayback(
         } catch (e: Exception) {
             logger.error(e) { "Could not check state" }
             if (e !is BadGatewayException) {
-                listener(PlaybackState.BROKEN)
+                playbackListener(PlaybackState.BROKEN)
             }
             return
         }
@@ -116,7 +109,7 @@ internal class SpotifyPlayback(
                 PlaybackState.PLAY
             }
 
-            if (!isDone()) listener(playbackState)
+            if (!isDone()) playbackListener(playbackState)
         }
     }
 
