@@ -93,6 +93,10 @@ internal class SpotifyPlayback(
             return
         }
 
+        state.progress_ms?.let {
+            feedbackChannel.updateProgress(Duration.ofMillis(it.toLong()))
+        }
+
         yield()
 
         state.apply {
