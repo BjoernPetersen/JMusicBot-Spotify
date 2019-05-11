@@ -102,8 +102,8 @@ internal class SpotifyPlayback(
         state.apply {
             val playbackState = if (!is_playing) {
                 if (
-                    progress_ms == null || progress_ms == 0
-                    || item == null || item.id != songId
+                    progress_ms == null || progress_ms == 0 ||
+                    item == null || item.id != songId
                 ) return markDone()
 
                 PlaybackState.PAUSE

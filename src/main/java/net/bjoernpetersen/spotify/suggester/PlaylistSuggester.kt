@@ -1,7 +1,6 @@
 package net.bjoernpetersen.spotify.suggester
 
 import com.wrapper.spotify.SpotifyApi
-import com.wrapper.spotify.model_objects.specification.PlaylistSimplified
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -154,7 +153,6 @@ class PlaylistSuggester : Suggester, CoroutineScope {
             nextSongs = LinkedList()
         }
     }
-
 
     private suspend fun getApi(): SpotifyApi {
         val token = auth.getToken()

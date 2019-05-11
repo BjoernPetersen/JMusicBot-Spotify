@@ -79,7 +79,10 @@ class SpotifyProviderImpl : SpotifyProvider, CoroutineScope {
     }
 
     private fun createSong(
-        id: String, title: String, description: String, durationMs: Int,
+        id: String,
+        title: String,
+        description: String,
+        durationMs: Int,
         albumArtUrl: String?
     ): Song {
         return Song(

@@ -110,7 +110,8 @@ internal class KtorCallback(private val port: Int) {
 
 @KtorExperimentalAPI
 private class AuthenticationException(
-    message: String, cause: Throwable? = null
+    message: String,
+    cause: Throwable? = null
 ) : BadRequestException(message, cause)
 
 class InvalidTokenException : Exception()

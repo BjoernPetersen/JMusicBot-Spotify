@@ -28,8 +28,8 @@ class PortExtension : Extension, ParameterResolver, AfterEachCallback {
         parameterContext: ParameterContext,
         extensionContext: ExtensionContext
     ): Boolean {
-        return Int::class.java.isAssignableFrom(parameterContext.parameter.type)
-            || Supplier::class.java.isAssignableFrom(parameterContext.parameter.type)
+        return Int::class.java.isAssignableFrom(parameterContext.parameter.type) ||
+            Supplier::class.java.isAssignableFrom(parameterContext.parameter.type)
     }
 
     override fun resolveParameter(
