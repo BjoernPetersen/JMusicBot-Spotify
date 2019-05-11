@@ -1,4 +1,4 @@
-# MusicBot-Spotify
+# MusicBot-Spotify [![GitHub (pre-)release](https://img.shields.io/github/release/BjoernPetersen/MusicBot-Spotify/all.svg)](https://github.com/BjoernPetersen/MusicBot-Spotify/releases) [![GitHub license](https://img.shields.io/github/license/BjoernPetersen/MusicBot-Spotify.svg)](https://github.com/BjoernPetersen/MusicBot-Spotify/blob/master/LICENSE)
 
 MusicBot Provider, Playback and Suggesters for songs from Spotify.
 
