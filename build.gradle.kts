@@ -1,4 +1,4 @@
-import org.gradle.kotlin.dsl.version
+import com.diffplug.spotless.LineEnding
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -32,10 +32,17 @@ idea {
 spotless {
     kotlin {
         ktlint()
+        lineEndings = LineEnding.UNIX
         endWithNewline()
     }
     kotlinGradle {
         ktlint()
+        lineEndings = LineEnding.UNIX
+        endWithNewline()
+    }
+    format("markdown") {
+        target("**/*.md")
+        lineEndings = LineEnding.UNIX
         endWithNewline()
     }
 }
@@ -119,7 +126,7 @@ dependencies {
         name = "junit-jupiter-api",
         version = Lib.JUNIT
     )
-    testRuntime(
+    testRuntimeOnly(
         group = "org.junit.jupiter",
         name = "junit-jupiter-engine",
         version = Lib.JUNIT
